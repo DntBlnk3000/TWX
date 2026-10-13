@@ -261,8 +261,8 @@ dialog .act{display:flex;gap:10px;justify-content:flex-end;padding:0 18px 18px}
 <main id="home"><div id="boot" style="padding:40px;font-size:20px">Loading…</div></main>
 <main id="editor" class="hide"></main>
 
-<dialog id="dlgPM"><form method="dialog" id="fPM"><div class="panel-h">New Project Manager</div><div class="body"><label>Name<input id="pmName" required maxlength="40" placeholder="e.g. Jordan Smith"></label></div><div class="act"><button class="btn ghost" value="cancel" formnovalidate>Cancel</button><button class="btn dark" value="ok">Create</button></div></form></dialog>
-<dialog id="dlgMtg"><form method="dialog" id="fMtg"><div class="panel-h">New Meeting Date</div><div class="body"><label>Meeting date<input id="mtDate" type="date" required></label></div><div class="act"><button class="btn ghost" value="cancel" formnovalidate>Cancel</button><button class="btn dark" value="ok">Create</button></div></form></dialog>
+<dialog id="dlgPM"><form method="dialog" id="fPM"><div class="panel-h">New Project Manager</div><div class="body"><label>Name<input id="pmName" required maxlength="40" placeholder="e.g. Jordan Smith"></label></div><div class="act"><button type="button" class="btn ghost" data-close>Cancel</button><button class="btn dark" value="ok">Create</button></div></form></dialog>
+<dialog id="dlgMtg"><form method="dialog" id="fMtg"><div class="panel-h">New Meeting Date</div><div class="body"><label>Meeting date<input id="mtDate" type="date" required></label></div><div class="act"><button type="button" class="btn ghost" data-close>Cancel</button><button class="btn dark" value="ok">Create</button></div></form></dialog>
 <dialog id="dlgNew">
   <form method="dialog" id="fNew">
     <div class="panel-h">New Job</div>
@@ -270,7 +270,7 @@ dialog .act{display:flex;gap:10px;justify-content:flex-end;padding:0 18px 18px}
       <label>Job name<input id="nName" required maxlength="60" placeholder="e.g. Timber Ridge Industrial"></label>
       <label>Meeting date<select id="nMeet" required></select></label>
     </div>
-    <div class="act"><button class="btn ghost" value="cancel" formnovalidate>Cancel</button><button class="btn dark" value="ok">Create</button></div>
+    <div class="act"><button type="button" class="btn ghost" data-close>Cancel</button><button class="btn dark" value="ok">Create</button></div>
   </form>
 </dialog>
 
@@ -725,6 +725,18 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){sel=null;refreshAll()}
 });
 $('#pname').addEventListener('input',e=>{if(P){P.name=e.target.value;save()}});
+/* Enter = save and move on. Dialog Cancel buttons are type=button, so Enter in a dialog now presses Create. */
+document.addEventListener('click',e=>{const b=e.target.closest('[data-close]');if(b)b.closest('dialog').close('cancel')});
+$('#pname').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing){e.preventDefault();flushSave();e.target.blur();toast('Job name saved',1500)}});
+$('#editor').addEventListener('keydown',e=>{
+  if(e.target.id!=='cap'||e.key!=='Enter'||e.isComposing||!P||!sel)return;
+  e.preventDefault();flushSave();
+  const pin=pinOf(sel);let next=null;
+  if(pin){const i=P.pins.indexOf(pin);next=P.pins[i+1]?P.pins[i+1].id:null}
+  else{const n=nextUnplaced(sel);next=n&&n!==sel?n:null}
+  if(next){selectPhoto(next);const c=$('#cap');if(c)c.focus()}
+  else{e.target.blur();toast('Caption saved — that was the last photo',2200)}
+});
 
 /* ---- map pan / pinch-zoom / place / move / rotate (mouse, pen and touch) ---- */
 function zoomBy(f,cx,cy){
