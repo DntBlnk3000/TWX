@@ -244,6 +244,7 @@ dialog label{display:flex;flex-direction:column;gap:4px;font-weight:700;font-siz
 dialog input,dialog select{padding:10px;border:2px solid var(--line);font-size:17px;font-weight:500;text-transform:none;letter-spacing:0;background:#fff}
 dialog input:focus,dialog select:focus{outline:none;border-color:var(--amber)}
 dialog .act{display:flex;gap:10px;justify-content:flex-end;padding:0 18px 18px}
+#busy{position:fixed;inset:0;z-index:400;background:rgba(10,10,10,.78);color:#fff;display:flex;align-items:center;justify-content:center;text-align:center;padding:30px;font-family:var(--display);font-size:clamp(22px,3vw,32px);letter-spacing:2px;text-transform:uppercase}
 .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--ink);color:#fff;border-left:6px solid var(--amber);padding:12px 20px;z-index:300;font-size:16px;max-width:90vw}
 </style>
 </head>
@@ -277,6 +278,7 @@ dialog .act{display:flex;gap:10px;justify-content:flex-end;padding:0 18px 18px}
 <input type="file" id="fileMap" accept="image/*" class="hide">
 <input type="file" id="filePhotos" accept="image/*,.heic,.heif" multiple class="hide">
 <input type="file" id="fileFolder" webkitdirectory multiple class="hide">
+<input type="file" id="fileBackup" class="hide">
 
 <script>
 function msg(t){const b=document.getElementById('boot')||document.body.appendChild(document.createElement('div'));b.id='boot';b.style.cssText='padding:40px;font:600 20px/1.4 sans-serif;color:#1a1a1a;background:#fff3cd;border-left:8px solid #FCB316;margin:30px;position:relative;z-index:50';b.textContent=t}
@@ -391,7 +393,7 @@ let saveT=null;
 
 let saveP=null;
 function flushSave(){clearTimeout(saveT);const p=saveP;saveP=null;if(p)DB.put('projects',p).catch(()=>toast('Could not save — browser storage is unavailable'))}
-function save(){saveP=P;clearTimeout(saveT);saveT=setTimeout(flushSave,250)}
+function save(){if(P)P.updated=Date.now();saveP=P;clearTimeout(saveT);saveT=setTimeout(flushSave,250)}
 // never lose the last edit when leaving a job or closing the tab
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushSave()});
 window.addEventListener('pagehide',flushSave);
@@ -450,7 +452,8 @@ async function showHome(){
   const dates={};for(const m of mtgs){const n=orderedJobIds(m,projs).length;(dates[m.date||'']=dates[m.date||'']||{jobs:0,pms:new Set()});dates[m.date||''].jobs+=n;if(n)dates[m.date||''].pms.add(m.pmId)}
   const dcards=Object.keys(dates).sort().reverse().map(d=>{const x=dates[d];
     return`<div class="card pm" data-date="${esc(d)}" title="Present every PM's jobs for this date"><div class="thumb ini">${esc(shortDate(d)||'—')}</div><div class="meta"><h3>${esc(numDate(d))}</h3><div class="sub">${x.jobs} job${x.jobs===1?'':'s'} · ${x.pms.size} PM${x.pms.size===1?'':'s'}</div><div style="margin-top:10px"><span class="tag dark">&#9654; Present all</span></div></div></div>`}).join('');
-  $('#home').innerHTML=`<section class="hero"><h2>Site Photo Map</h2><p>Open a project manager to set up their meeting dates and jobs. Present one PM's meeting from their page, or everyone's jobs for a date from here.</p></section>
+  $('#home').innerHTML=`<section class="hero"><h2>Site Photo Map</h2><p>Open a project manager to set up their meeting dates and jobs. Present one PM's meeting from their page, or everyone's jobs for a date from here.</p>
+  <div class="mbtns"><button class="btn" id="bBackup" title="Save every PM, meeting, job and photo into one file">&#8681; Back up everything</button><button class="btn ghost" id="bRestore" title="Load a backup file made on another device">&#8679; Restore a backup</button></div></section>
   <h2 class="sec">Project managers</h2><div class="grid tight">${cards}<div class="card new" id="cNewPM"><span class="plus">+</span>New project manager</div></div>
   ${dcards?`<h2 class="sec">Meetings by date <small>all PMs</small></h2><div class="grid tight">${dcards}</div>`:''}`;
 }
@@ -467,7 +470,7 @@ async function showPM(id){
     lcards.push(`<div class="card" data-id="${p.id}"><div class="thumb" style="${thumb?`background-image:url(${thumb})`:''}">${thumb?'':'No site map yet'}</div><div class="meta"><h3>${esc(p.name)}</h3><div class="sub">No meeting date — open it and pick one</div></div><button class="x" title="Delete job" data-del="${p.id}">&times;</button></div>`);
   }
   $('#home').innerHTML=`<section class="hero"><h2>${esc(curPM.name)}</h2><p><a href="#" id="bkHome" style="color:var(--amber);font-weight:700">&larr; All project managers</a> &nbsp;·&nbsp; ${mtgs.length} meeting date${mtgs.length===1?'':'s'}</p>
-    <div class="mbtns"><button class="btn amber" id="cNewMtg">+ New meeting date</button><button class="btn" id="cNew">+ New job</button></div></section>
+    <div class="mbtns"><button class="btn amber" id="cNewMtg">+ New meeting date</button><button class="btn" id="cNew">+ New job</button><button class="btn ghost" id="bBackup" title="Save this PM's meetings, jobs and photos into one file">&#8681; Back up</button></div></section>
   <h2 class="sec">Meeting dates</h2><div class="grid tight">${mcards||'<div class="mempty" style="grid-column:1/-1">No meeting dates yet. Click <b>+ New meeting date</b> (for example 10.6.26), then add jobs to it.</div>'}</div>
   ${lcards.length?`<h2 class="sec">Jobs without a meeting date</h2><div class="grid tight">${lcards.join('')}</div>`:''}`;
 }
@@ -484,7 +487,7 @@ async function showMeeting(id){
   }
   $('#home').innerHTML=`<section class="hero"><p><a href="#" id="bkPM" style="color:var(--amber);font-weight:700">&larr; ${esc(curPM?curPM.name:'Back')}</a></p>
     <h2>Meeting ${esc(numDate(curMeeting.date))}</h2><div class="mdate"><input type="date" id="mDate" value="${esc(curMeeting.date||'')}"> <span>${curMeeting.jobIds.length} job${curMeeting.jobIds.length===1?'':'s'}</span></div>
-    <div class="mbtns"><button class="btn amber" id="mPresent">&#9654; Present meeting</button><button class="btn" id="cNew">+ New job</button><button class="btn ghost" id="mExport">Export slideshow</button></div></section>
+    <div class="mbtns"><button class="btn amber" id="mPresent">&#9654; Present meeting</button><button class="btn" id="cNew">+ New job</button><button class="btn ghost" id="mExport">Export slideshow</button><button class="btn ghost" id="bBackup" title="Save this meeting's jobs and photos into one file">&#8681; Back up</button></div></section>
     <div class="mlist">${rows.join('')||'<div class="mempty">No jobs yet. Click <b>+ New job</b> to add the first one.</div>'}</div>`;
 }
 async function saveMtg(){curMeeting.updated=Date.now();await DB.put('meetings',curMeeting)}
@@ -513,7 +516,7 @@ $('#home').addEventListener('click',async e=>{
   if(dpm){e.stopPropagation();const m=await DB.get('pms',dpm.dataset.delpm);const n=(await DB.all('projects')).filter(p=>p.pmId===m.id);
     if(confirm(`Delete ${m.name} and ${n.length} job${n.length===1?'':'s'} with all photos? This can't be undone.`)){for(const p of n)await deleteProject(p.id);for(const x of (await DB.all('meetings')).filter(x=>x.pmId===m.id))await DB.del('meetings',x.id);await DB.del('pms',m.id);showHome()}return}
   const ren=t.closest('[data-ren]');
-  if(ren){e.stopPropagation();const m=await DB.get('pms',ren.dataset.ren);const nn=prompt('Rename project manager',m.name);if(nn&&nn.trim()){m.name=nn.trim();await DB.put('pms',m);showHome()}return}
+  if(ren){e.stopPropagation();const m=await DB.get('pms',ren.dataset.ren);const nn=prompt('Rename project manager',m.name);if(nn&&nn.trim()){m.name=nn.trim();m.updated=Date.now();await DB.put('pms',m);showHome()}return}
   if(t.closest('#cNewPM')){$('#pmName').value='';$('#dlgPM').showModal();$('#pmName').focus();return}
   const dm=t.closest('[data-delmtg]');
   if(dm){e.stopPropagation();const m=await DB.get('meetings',dm.dataset.delmtg);const n=orderedJobIds(m,await DB.all('projects')).length;
@@ -981,6 +984,92 @@ function startShow(Ds,opts={}){
   render();
   return{go};
 }
+
+/* ================= backup / restore: move jobs between devices (PC -> phone, PM -> PM) =================
+   File layout: "TWXBACKUP1\n" + 12-digit JSON length + "\n" + JSON manifest + raw image bytes.
+   Restore MERGES: for each job the newer copy wins, nothing else on the device is touched. */
+const BK_MAGIC='TWXBACKUP1\n',BK_HEAD=24;
+const mb=n=>n>=1e9?(n/1e9).toFixed(1)+' GB':Math.max(.1,n/1e6).toFixed(1)+' MB';
+function busy(t){let b=$('#busy');if(t==null){if(b)b.remove();return}if(!b){b=document.createElement('div');b.id='busy';document.body.appendChild(b)}b.textContent=t}
+async function backupScope(){
+  const pms=await DB.all('pms'),mtgs=await DB.all('meetings'),projs=await DB.all('projects');
+  if(curMeeting){const m=mtgs.find(x=>x.id===curMeeting.id)||curMeeting,pm=pms.find(x=>x.id===m.pmId);
+    return{label:`Meeting ${numDate(m.date)}${pm?' - '+pm.name:''}`,pms:pm?[pm]:[],meetings:[m],projects:projs.filter(p=>p.meetingId===m.id)}}
+  if(curPM)return{label:curPM.name,pms:pms.filter(x=>x.id===curPM.id),meetings:mtgs.filter(m=>m.pmId===curPM.id),projects:projs.filter(p=>p.pmId===curPM.id)};
+  return{label:'Everything',pms,meetings:mtgs,projects:projs};
+}
+async function makeBackup(){
+  flushSave();
+  const S=await backupScope();
+  if(!S.pms.length&&!S.projects.length)return toast('Nothing to back up yet');
+  busy('Preparing backup…');
+  try{
+    const parts=[],blobs=[];let off=0,nPhotos=0;
+    const pack=v=>{const o={};for(const [k,x] of Object.entries(v)){if(x instanceof Blob){o[k]={$blob:[off,x.size,x.type]};parts.push(x);off+=x.size}else o[k]=x}return o};
+    for(const p of S.projects)for(const b of await DB.byPid(p.id)){blobs.push(pack(b));if(b.kind==='photo')nPhotos++}
+    const man={app:'twx-photomap',v:1,created:new Date().toISOString(),label:S.label,pms:S.pms,meetings:S.meetings,projects:S.projects,blobs};
+    const json=new TextEncoder().encode(JSON.stringify(man));
+    const file=new Blob([BK_MAGIC+String(json.length).padStart(12,'0')+'\n',json,...parts],{type:'application/octet-stream'});
+    const name=`TWX Backup - ${S.label.replace(/[^\w\- .]+/g,'').trim()||'Jobs'} - ${new Date().toISOString().slice(0,10)}.twxbackup`;
+    const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=name;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),120000);
+    busy(null);
+    toast(`Backup saved (${S.projects.length} job${S.projects.length===1?'':'s'}, ${nPhotos} photo${nPhotos===1?'':'s'}, ${mb(file.size)}). On your other device, open the app and tap Restore a backup.`,8000);
+  }catch(e){console.error(e);busy(null);toast('Backup failed: '+(e&&e.message||e),6000)}
+}
+async function restoreBackup(file){
+  busy('Reading backup…');
+  try{
+    const head=await file.slice(0,BK_HEAD).text();
+    if(!head.startsWith(BK_MAGIC)){busy(null);return toast(/\.html?$/i.test(file.name)?'That is a slideshow file, not a backup. Open it directly to present it, or use Back up to make a backup file.':'That file is not a TWX backup ('+file.name+')',7000)}
+    const base=BK_HEAD+(+head.slice(11,23));
+    const man=JSON.parse(await file.slice(BK_HEAD,base).text());
+    if(man.app!=='twx-photomap'||!man.v){busy(null);return toast('That file is not a TWX backup',6000)}
+    if(man.v>1){busy(null);return toast('This backup was made with a newer version of the app. Reload the app (or update it) and try again.',7000)}
+    if(base+man.blobs.reduce((n,b)=>n+Object.values(b).reduce((m,x)=>m+(x&&x.$blob?x.$blob[1]:0),0),0)>file.size){busy(null);return toast('This backup file is incomplete (it may still be downloading). Wait for it to finish, then try again.',7000)}
+    const stamp=x=>x.updated||x.created||0,norm=t=>String(t||'').trim().toLowerCase();
+    const unpack=async v=>{const o={};for(const [k,x] of Object.entries(v)){if(x&&typeof x==='object'&&Array.isArray(x.$blob)){const [at,len,t]=x.$blob;o[k]=new Blob([await file.slice(base+at,base+at+len).arrayBuffer()],{type:t})}else o[k]=x}return o};
+    // same PM name / same PM + meeting date on this device = the same thing (PMs share backups with each other)
+    const pmMap={},mtMap={},localPMs=await DB.all('pms'),localMtgs=await DB.all('meetings');
+    for(const m of man.pms){
+      const ex=localPMs.find(x=>x.id===m.id);
+      if(!ex){const twin=localPMs.find(x=>norm(x.name)===norm(m.name));if(twin){pmMap[m.id]=twin.id;continue}}
+      if(!ex||stamp(m)>stamp(ex))await DB.put('pms',m);
+    }
+    for(const m0 of man.meetings){
+      const m={...m0,pmId:pmMap[m0.pmId]||m0.pmId},ex=localMtgs.find(x=>x.id===m.id);
+      if(!ex&&m.date){const twin=localMtgs.find(x=>x.pmId===m.pmId&&x.date===m.date);
+        if(twin){mtMap[m.id]=twin.id;twin.jobIds=[...twin.jobIds,...m.jobIds.filter(j=>!twin.jobIds.includes(j))];twin.updated=Math.max(stamp(twin),stamp(m));await DB.put('meetings',twin);continue}}
+      if(!ex||stamp(m)>stamp(ex))await DB.put('meetings',m);
+    }
+    let added=0,updated=0,same=0;const take=[];
+    for(const p0 of man.projects){
+      const p={...p0,pmId:pmMap[p0.pmId]||p0.pmId,meetingId:mtMap[p0.meetingId]||p0.meetingId},ex=await DB.get('projects',p.id);
+      if(!ex){take.push(p);added++}else if(stamp(p)>stamp(ex)){take.push(p);updated++}else same++;
+    }
+    const ids=new Set(take.map(p=>p.id)),want=man.blobs.filter(b=>ids.has(b.pid));
+    let i=0;
+    for(const b of want){busy(`Restoring photos… ${++i} of ${want.length}`);await DB.put('blobs',await unpack(b))}
+    for(const p of take){ // photos come first, then the job, so a cut-off restore never leaves a job pointing at missing photos
+      const keep=new Set([p.mapId,...p.photoIds]);
+      for(const b of await DB.byPid(p.id))if(!keep.has(b.id))await DB.del('blobs',b.id);
+      await DB.put('projects',p);
+    }
+    try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(_){}
+    busy(null);await showHome();
+    const bits=[];if(added)bits.push(`${added} new job${added===1?'':'s'}`);if(updated)bits.push(`${updated} updated`);if(same)bits.push(`${same} already up to date`);
+    toast(`Restored "${man.label}": ${bits.join(', ')||'nothing new'}`,7000);
+  }catch(e){
+    console.error(e);busy(null);
+    const full=e&&(e.name==='QuotaExceededError'||/quota/i.test(e.message||''));
+    toast(full?'This device ran out of storage for the app. Free up space (or delete old meetings in the app) and try again.':'Restore failed: '+(e&&e.message||e),8000);
+  }
+}
+document.addEventListener('click',e=>{
+  if(e.target.closest('#bBackup'))return makeBackup();
+  if(e.target.closest('#bRestore'))return $('#fileBackup').click();
+});
+$('#fileBackup').addEventListener('change',e=>{const f=e.target.files[0];e.target.value='';if(f)restoreBackup(f)});
 
 /* ---- export a standalone slideshow file ---- */
 async function exportShow(Ds,title,date){
