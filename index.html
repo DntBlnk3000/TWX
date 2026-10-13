@@ -449,13 +449,9 @@ async function showHome(){
   const projs=await DB.all('projects'),mtgs=await DB.all('meetings');
   const cards=pms.map(m=>{const mine=projs.filter(p=>p.pmId===m.id);const dates=mtgs.filter(x=>x.pmId===m.id).length;const n=mine.reduce((s,p)=>s+p.photoIds.length,0);
     return`<div class="card pm" data-pm="${m.id}"><div class="thumb ini">${esc(pmInitials(m.name))}</div><div class="meta"><h3>${esc(m.name)}</h3><div class="sub">${dates} meeting date${dates===1?'':'s'} · ${mine.length} job${mine.length===1?'':'s'} · ${n} photos</div></div><button class="x" style="right:50px" title="Rename" data-ren="${m.id}">&#9998;</button><button class="x" title="Delete PM" data-delpm="${m.id}">&times;</button></div>`}).join('');
-  const dates={};for(const m of mtgs){const n=orderedJobIds(m,projs).length;(dates[m.date||'']=dates[m.date||'']||{jobs:0,pms:new Set()});dates[m.date||''].jobs+=n;if(n)dates[m.date||''].pms.add(m.pmId)}
-  const dcards=Object.keys(dates).sort().reverse().map(d=>{const x=dates[d];
-    return`<div class="card pm" data-date="${esc(d)}" title="Present every PM's jobs for this date"><div class="thumb ini">${esc(shortDate(d)||'—')}</div><div class="meta"><h3>${esc(numDate(d))}</h3><div class="sub">${x.jobs} job${x.jobs===1?'':'s'} · ${x.pms.size} PM${x.pms.size===1?'':'s'}</div><div style="margin-top:10px"><span class="tag dark">&#9654; Present all</span></div></div></div>`}).join('');
-  $('#home').innerHTML=`<section class="hero"><h2>Site Photo Map</h2><p>Open a project manager to set up their meeting dates and jobs. Present one PM's meeting from their page, or everyone's jobs for a date from here.</p>
+  $('#home').innerHTML=`<section class="hero"><h2>Site Photo Map</h2><p>Open a project manager to set up their meeting dates and jobs. Each PM presents their own meetings from their page.</p>
   <div class="mbtns"><button class="btn" id="bBackup" title="Save every PM, meeting, job and photo into one file">&#8681; Back up everything</button><button class="btn ghost" id="bRestore" title="Load a backup file made on another device">&#8679; Restore a backup</button></div></section>
-  <h2 class="sec">Project managers</h2><div class="grid tight">${cards}<div class="card new" id="cNewPM"><span class="plus">+</span>New project manager</div></div>
-  ${dcards?`<h2 class="sec">Meetings by date <small>all PMs</small></h2><div class="grid tight">${dcards}</div>`:''}`;
+  <h2 class="sec">Project managers</h2><div class="grid tight">${cards}<div class="card new" id="cNewPM"><span class="plus">+</span>New project manager</div></div>`;
 }
 async function showPM(id){
   P=null;sel=null;curMeeting=null;curPM=await DB.get('pms',id);if(!curPM)return showHome();
@@ -493,11 +489,6 @@ async function showMeeting(id){
 async function saveMtg(){curMeeting.updated=Date.now();await DB.put('meetings',curMeeting)}
 async function jobsData(ids){const Ds=[];for(const id of ids){const D=await showDataFor(id);if(D)Ds.push(D)}return Ds}
 async function idsForMeeting(m){return orderedJobIds(m,await DB.all('projects'))}
-async function idsForDate(date){
-  const projs=await DB.all('projects'),pms=Object.fromEntries((await DB.all('pms')).map(m=>[m.id,m.name]));
-  const ms=(await DB.all('meetings')).filter(m=>(m.date||'')===date).sort((a,b)=>(pms[a.pmId]||'').localeCompare(pms[b.pmId]||''));
-  return ms.flatMap(m=>orderedJobIds(m,projs));
-}
 async function presentIds(ids,date){
   toast('Loading meeting…',60000);const Ds=await jobsData(ids);document.querySelectorAll('.toast').forEach(x=>x.remove());
   if(!Ds.length)return toast('None of these jobs have a site map yet');
@@ -523,7 +514,6 @@ $('#home').addEventListener('click',async e=>{
     if(confirm(`Delete meeting ${numDate(m.date)}${n?` and its ${n} job${n===1?'':'s'} with all photos`:''}? This can't be undone.`)){await deleteMeeting(m);showPM(curPM.id)}return}
   const pres=t.closest('[data-pres]');
   if(pres){const m=await DB.get('meetings',pres.dataset.pres);return presentIds(await idsForMeeting(m),m.date)}
-  const dc=t.closest('.card[data-date]');if(dc)return presentIds(await idsForDate(dc.dataset.date),dc.dataset.date);
   if(t.closest('#cNewMtg')){if(!curPM)return;$('#mtDate').value=new Date().toISOString().slice(0,10);$('#dlgMtg').showModal();return}
   if(t.closest('#cNew')){
     if(!curPM)return;
