@@ -244,6 +244,19 @@ dialog label{display:flex;flex-direction:column;gap:4px;font-weight:700;font-siz
 dialog input,dialog select{padding:10px;border:2px solid var(--line);font-size:17px;font-weight:500;text-transform:none;letter-spacing:0;background:#fff}
 dialog input:focus,dialog select:focus{outline:none;border-color:var(--amber)}
 dialog .act{display:flex;gap:10px;justify-content:flex-end;padding:0 18px 18px}
+dialog .act.wrap{flex-wrap:wrap;flex-direction:row-reverse;justify-content:flex-start}
+dialog .note{margin:0;font-size:15px;line-height:1.4;color:#444}
+dialog .err{margin:0;color:#b42318;font-weight:700;font-size:15px}
+dialog .err:empty{display:none}
+dialog .lnk{color:var(--ink);font-weight:700;font-size:14px}
+.sync{appearance:none;border:0;cursor:pointer;display:flex;align-items:center;gap:8px;background:var(--ink);color:#fff;font:700 13px/1 inherit;letter-spacing:.4px;padding:9px 13px;white-space:nowrap;flex:none}
+.sync i{width:10px;height:10px;border-radius:50%;background:#8a8a8a;flex:none}
+.sync[data-s=ok] i{background:#3fb950}
+.sync[data-s=syncing] i,.sync[data-s=loading] i{background:var(--amber);animation:syncpulse 1s ease-in-out infinite}
+.sync[data-s=signin] i{background:#fff}
+.sync[data-s=error] i{background:#f05a4a}
+@keyframes syncpulse{50%{opacity:.25}}
+@media (max-width:760px){.sync:not([data-s=signin]) span{display:none}.sync{padding:11px}}
 #busy{position:fixed;inset:0;z-index:400;background:rgba(10,10,10,.78);color:#fff;display:flex;align-items:center;justify-content:center;text-align:center;padding:30px;font-family:var(--display);font-size:clamp(22px,3vw,32px);letter-spacing:2px;text-transform:uppercase}
 .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--ink);color:#fff;border-left:6px solid var(--amber);padding:12px 20px;z-index:300;font-size:16px;max-width:90vw}
 </style>
@@ -257,6 +270,7 @@ dialog .act{display:flex;gap:10px;justify-content:flex-end;padding:0 18px 18px}
   <div class="grow"></div>
   <button class="btn ghost hide" id="bExport">Export Slideshow</button>
   <button class="btn dark hide" id="bPresent">&#9654; Present</button>
+  <button class="sync" id="bSync" type="button" title="Cloud sync" data-s="loading"><i></i><span>Connecting…</span></button>
 </header>
 
 <main id="home"><div id="boot" style="padding:40px;font-size:20px">Loading…</div></main>
@@ -279,6 +293,7 @@ dialog .act{display:flex;gap:10px;justify-content:flex-end;padding:0 18px 18px}
 <input type="file" id="filePhotos" accept="image/*,.heic,.heif" multiple class="hide">
 <input type="file" id="fileFolder" webkitdirectory multiple class="hide">
 <input type="file" id="fileBackup" class="hide">
+<dialog id="dlgSync"><form method="dialog" id="fSync" novalidate><div class="panel-h">Cloud sync</div><div class="body" id="syncBody"></div><div class="act wrap" id="syncAct"></div></form></dialog>
 
 <script>
 function msg(t){const b=document.getElementById('boot')||document.body.appendChild(document.createElement('div'));b.id='boot';b.style.cssText='padding:40px;font:600 20px/1.4 sans-serif;color:#1a1a1a;background:#fff3cd;border-left:8px solid #FCB316;margin:30px;position:relative;z-index:50';b.textContent=t}
@@ -300,11 +315,12 @@ const isImg=f=>/^image\//.test(f.type)||/\.(jpe?g|png|gif|webp|bmp|avif|hei[cf])
 /* ================= storage (IndexedDB) ================= */
 const DB={
   db:null,
-  open(){return new Promise((res,rej)=>{const r=indexedDB.open('twx-photomap',3);
+  open(){return new Promise((res,rej)=>{const r=indexedDB.open('twx-photomap',4);
     r.onupgradeneeded=()=>{const d=r.result;
       if(!d.objectStoreNames.contains('projects')){d.createObjectStore('projects',{keyPath:'id'});d.createObjectStore('blobs',{keyPath:'id'}).createIndex('pid','pid')}
       if(!d.objectStoreNames.contains('pms'))d.createObjectStore('pms',{keyPath:'id'});
-      if(!d.objectStoreNames.contains('meetings'))d.createObjectStore('meetings',{keyPath:'id'})};
+      if(!d.objectStoreNames.contains('meetings'))d.createObjectStore('meetings',{keyPath:'id'});
+      if(!d.objectStoreNames.contains('sync'))d.createObjectStore('sync',{keyPath:'k'})};
     r.onsuccess=()=>{this.db=r.result;this.db.onversionchange=()=>{this.db.close();location.reload()};res()};
     r.onerror=()=>rej(r.error);
     r.onblocked=()=>msg('This app is open in another tab or window using an older version. Close those tabs, then reload this page.')})},
@@ -315,6 +331,15 @@ const DB={
   all(s){return this.tx(s,'readonly',o=>o.getAll())},
   byPid(pid){return this.tx('blobs','readonly',o=>o.index('pid').getAll(pid))}
 };
+/* every save/delete of a PM, meeting, job or photo nudges cloud sync; deletes leave a "tombstone" so other devices delete it too */
+const SYNC_KIND={pms:'pm',meetings:'meeting',projects:'project',blobs:'blob'},KIND_STORE={pm:'pms',meeting:'meetings',project:'projects',blob:'blobs'};
+const rawPut=(s,v)=>DB.tx(s,'readwrite',o=>o.put(v)),rawDel=(s,k)=>DB.tx(s,'readwrite',o=>o.delete(k));
+DB.put=async(s,v)=>{const r=await rawPut(s,v);if(SYNC_KIND[s])Sync.touch();return r};
+DB.del=async(s,k)=>{
+  if(SYNC_KIND[s]){const kind=SYNC_KIND[s];let path='';
+    if(kind==='blob'){const sr=await DB.get('sync','blob:'+k);path=sr&&sr.path||''}
+    await rawPut('sync',{k:'tomb:'+kind+':'+k,kind,id:k,at:Date.now(),path})}
+  const r=await rawDel(s,k);if(SYNC_KIND[s])Sync.touch();return r};
 
 const isHeic=f=>/hei[cf]/i.test(f.type)||/\.hei[cf]$/i.test(f.name);
 let heicLib=null;
@@ -1061,6 +1086,248 @@ document.addEventListener('click',e=>{
 });
 $('#fileBackup').addEventListener('change',e=>{const f=e.target.files[0];e.target.value='';if(f)restoreBackup(f)});
 
+/* ================= cloud sync: Supabase, one shared TWX team login =================
+   Each device keeps working from its own storage (so it works with no signal); this copies changes
+   up and down in the background. The newest edit of each record wins, same rule as Restore.
+   Photos are uploaded once (cloud copies are compressed); a job is only sent after its photos are up. */
+const CLOUD={url:'https://ztafovkhwhnyctksdelo.supabase.co',key:'sb_publishable_wJtw-Y6BJj7V_xl9uKkyUA_elett7b2',
+  lib:'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js',bucket:'photos'};
+const stampOf=x=>x?(x.updated||x.created||0):0;
+const sigOf=b=>b.sig||`${b.blob?b.blob.size:0}:${b.w}:${b.h}`;
+const Sync=(()=>{
+  let sb=null,user=null,state='loading',detail='',timer=null,running=false,again=false,libP=null,lastOk=0,setup=false,started=false;
+  const ls={get:k=>{try{return localStorage.getItem(k)}catch(_){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(_){}}};
+  const chk=r=>{if(r&&r.error)throw r.error;return r?r.data:null};
+  const LABEL={loading:'Connecting…',signin:'Sign in',ok:'Synced',offline:'Offline',error:'Sync problem'};
+  function setState(st,d=''){state=st;detail=d;paint()}
+  function statusLine(){
+    if(state==='ok')return'All changes synced'+(lastOk?' at '+new Date(lastOk).toLocaleTimeString():'')+'.';
+    if(state==='syncing')return detail||'Syncing…';
+    if(state==='offline')return'No connection right now. Changes are saved on this device and will sync when you are back online.';
+    if(state==='error')return'Last sync failed: '+detail+'. It will retry automatically.';
+    return'';
+  }
+  function paint(){
+    const b=$('#bSync');if(!b)return;b.dataset.s=state;
+    const t=state==='syncing'?(detail||'Syncing…'):LABEL[state];b.querySelector('span').textContent=t;
+    b.title=state==='ok'&&lastOk?'Synced at '+new Date(lastOk).toLocaleTimeString():state==='error'?'Sync problem: '+detail:t;
+    const st=$('#sStat');if(st)st.textContent=statusLine();
+  }
+  function loadLib(){
+    if(window.supabase&&window.supabase.createClient)return Promise.resolve();
+    if(libP)return libP;
+    libP=new Promise((res,rej)=>{const sc=document.createElement('script');sc.src=CLOUD.lib;sc.onload=()=>res();sc.onerror=()=>{libP=null;sc.remove();rej(new Error('offline'))};document.head.appendChild(sc)});
+    return libP;
+  }
+  async function client(){
+    if(sb)return sb;await loadLib();
+    sb=window.supabase.createClient(CLOUD.url,CLOUD.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'twx-team-auth'}});
+    sb.auth.onAuthStateChange((ev,session)=>{user=session?session.user:null;if(ev==='SIGNED_OUT')setState('signin')});
+    return sb;
+  }
+  async function start(){
+    started=true;setState('loading');
+    try{await client();const {data}=await sb.auth.getSession();user=data&&data.session?data.session.user:null}
+    catch(e){setState('offline');return}
+    if(!user)return setState('signin');
+    kick(0);
+  }
+  function kick(ms=4000){clearTimeout(timer);timer=setTimeout(run,ms)}
+  function touch(){if(user)kick(4000)}
+  async function run(){
+    if(!user||!sb)return;
+    if(running){again=true;return}
+    running=true;
+    try{
+      flushSave();
+      setState('syncing','Syncing…');
+      const changed=new Set();
+      await push();
+      await pull(changed);
+      lastOk=Date.now();setState('ok');
+      if(changed.size)refreshView(changed);
+    }catch(e){
+      console.error('sync',e);
+      const m=String(e&&(e.message||e.error_description)||e);
+      if(/not signed in to the team|42501|row-level security/i.test(m))setState('error','this login is not the TWX team login');
+      else if(navigator.onLine===false||/fetch|network|offline|load failed|timed? ?out/i.test(m))setState('offline');
+      else setState('error',m);
+      kick(60000);
+    }finally{running=false;if(again){again=false;kick(1500)}}
+  }
+  // smaller cloud copy of a photo or map (makes the free storage go further); thumbnails go up as they are
+  async function cloudCopy(b){
+    const max=b.kind==='map'?4000:2400,q=b.kind==='map'?.9:.85;
+    if(Math.max(b.w,b.h)<=max&&b.blob.size<=(b.kind==='map'?4e6:1.2e6))return{blob:b.blob,w:b.w,h:b.h};
+    try{
+      const bmp=await createImageBitmap(b.blob),k=Math.min(1,max/Math.max(bmp.width,bmp.height)),w=Math.round(bmp.width*k),h=Math.round(bmp.height*k);
+      const c=resized(bmp,w,h);if(bmp.close)bmp.close();
+      const out=await new Promise(r=>c.toBlob(r,'image/jpeg',q));
+      return out&&out.size<b.blob.size?{blob:out,w,h}:{blob:b.blob,w:b.w,h:b.h};
+    }catch(_){return{blob:b.blob,w:b.w,h:b.h}}
+  }
+  async function push(){
+    const S=new Map((await DB.all('sync')).map(r=>[r.k,r])),store=sb.storage.from(CLOUD.bucket);
+    // 1) deletes
+    const tombs=[...S.values()].filter(r=>r.k.startsWith('tomb:'));
+    if(tombs.length){
+      const paths=tombs.filter(t=>t.path).flatMap(t=>[t.path,t.path+'.t']);
+      if(paths.length){const r=await store.remove(paths);if(r.error)console.warn('photo cleanup',r.error)}
+      const rows=tombs.map(t=>({kind:t.kind,id:t.id,updated:t.at,deleted:true,data:{}}));
+      for(let j=0;j<rows.length;j+=100)chk(await sb.rpc('push_items',{rows:rows.slice(j,j+100)}));
+      for(const t of tombs){await rawDel('sync',t.k);await rawDel('sync',t.kind+':'+t.id)}
+    }
+    // 2) photos and maps that are not in the cloud yet (or were replaced)
+    const todo=(await DB.all('blobs')).filter(b=>{const r=S.get('blob:'+b.id);return!r||r.sig!==sigOf(b)});
+    let i=0;
+    for(const b of todo){
+      setState('syncing',`Uploading ${++i}/${todo.length}`);
+      const old=S.get('blob:'+b.id),path=`${b.pid}/${b.id}.${Date.now().toString(36)}`,full=await cloudCopy(b),sig=sigOf(b),at=Date.now();
+      chk(await store.upload(path,full.blob,{upsert:true,contentType:full.blob.type||'image/jpeg',cacheControl:'31536000'}));
+      chk(await store.upload(path+'.t',b.thumb,{upsert:true,contentType:b.thumb.type||'image/jpeg',cacheControl:'31536000'}));
+      chk(await sb.rpc('push_items',{rows:[{kind:'blob',id:b.id,updated:at,data:{id:b.id,pid:b.pid,kind:b.kind,name:b.name,w:full.w,h:full.h,sig,path}}]}));
+      await rawPut('sync',{k:'blob:'+b.id,sig,path,v:at});
+      if(old&&old.path&&old.path!==path)store.remove([old.path,old.path+'.t']).catch(()=>{});
+    }
+    // 3) PMs, meetings and jobs changed since the last sync (photos went first, so a job never arrives without them)
+    const rows=[],done=[];
+    for(const [st,kind] of [['pms','pm'],['meetings','meeting'],['projects','project']])
+      for(const x of await DB.all(st)){const r=S.get(kind+':'+x.id),v=stampOf(x);if(!r||r.v<v){rows.push({kind,id:x.id,updated:v,data:x});done.push({k:kind+':'+x.id,v})}}
+    if(rows.length)setState('syncing',`Sending ${rows.length} change${rows.length===1?'':'s'}`);
+    for(let j=0;j<rows.length;j+=100)chk(await sb.rpc('push_items',{rows:rows.slice(j,j+100)}));
+    for(const d of done)await rawPut('sync',d);
+  }
+  async function fetchBlobs(p){
+    const ids=[p.mapId,...(p.photoIds||[])].filter(Boolean);if(!ids.length)return;
+    const metas=[];
+    for(let j=0;j<ids.length;j+=100)metas.push(...chk(await sb.from('items').select('id,data,updated').eq('kind','blob').eq('deleted',false).in('id',ids.slice(j,j+100))));
+    const need=[];for(const m of metas){const l=await DB.get('blobs',m.id);if(!l||sigOf(l)!==m.data.sig)need.push(m)}
+    let k=0;const store=sb.storage.from(CLOUD.bucket),nm=String(p.name||'job').slice(0,24);
+    for(const m of need){
+      const d=m.data;setState('syncing',`Downloading ${nm} ${++k}/${need.length}`);
+      const full=chk(await store.download(d.path)),thumb=chk(await store.download(d.path+'.t'));
+      await rawPut('blobs',{id:d.id,pid:d.pid,kind:d.kind,name:d.name,w:d.w,h:d.h,sig:d.sig,blob:full,thumb});
+      await rawPut('sync',{k:'blob:'+d.id,sig:d.sig,path:d.path,v:m.updated||0});
+    }
+  }
+  async function pull(changed){
+    const cur=ls.get('twx.sync.cursor')||'';
+    // look back 30s past the last change seen, so a save that finished a moment late is never missed
+    let after=cur?new Date(Date.parse(cur.replace(/(\.\d{3})\d+/,'$1'))-30000).toISOString():'1970-01-01T00:00:00Z',maxAt=cur;
+    const all=[];
+    for(;;){
+      const data=chk(await sb.from('items').select('kind,id,data,updated,deleted,server_at').gt('server_at',after).order('server_at',{ascending:true}).limit(500));
+      all.push(...data);if(data.length)after=data[data.length-1].server_at;if(data.length<500)break;
+    }
+    for(const r of all)if(!maxAt||r.server_at>maxAt)maxAt=r.server_at;
+    const order={pm:0,meeting:1,project:2,blob:3};all.sort((a,b)=>order[a.kind]-order[b.kind]);
+    for(const r of all){
+      const st=KIND_STORE[r.kind];if(!st)continue;
+      const local=await DB.get(st,r.id);
+      if(r.kind==='blob'){if(r.deleted&&local){await rawDel('blobs',r.id);await rawDel('sync','blob:'+r.id);changed.add(local.pid)}continue}
+      if(local&&stampOf(local)>=r.updated)continue;                 // this device already has the same or a newer copy
+      if(r.deleted){
+        if(local){
+          if(r.kind==='project')for(const b of await DB.byPid(r.id)){await rawDel('blobs',b.id);await rawDel('sync','blob:'+b.id)}
+          await rawDel(st,r.id);changed.add(r.id);
+        }
+        await rawDel('sync',r.kind+':'+r.id);continue;
+      }
+      if(r.kind==='project')await fetchBlobs(r.data);             // photos land before the job that shows them
+      await rawPut(st,r.data);await rawPut('sync',{k:r.kind+':'+r.id,v:r.updated});changed.add(r.id);
+    }
+    if(maxAt)ls.set('twx.sync.cursor',maxAt);
+  }
+  function refreshView(changed){
+    if($('#show'))return;                                          // never interrupt a slideshow
+    if(P){
+      if(!changed.has(P.id))return;
+      const a=document.activeElement;if(a&&a.matches&&a.matches('input,textarea,select')){kick(20000);return}
+      const keep=sel,id=P.id;
+      DB.get('projects',id).then(p=>{if(!p){toast('This job was deleted on another device');showHome();return}
+        openProject(id).then(()=>{if(keep&&photos[keep])selectPhoto(keep)})});
+      return;
+    }
+    if(document.querySelector('dialog[open]'))return;
+    if(curMeeting)showMeeting(curMeeting.id);else if(curPM)showPM(curPM.id);else showHome();
+  }
+  /* ---- sign-in panel ---- */
+  function paintDlg(err=''){
+    const B=$('#syncBody'),A=$('#syncAct'),close='<button type="button" class="btn ghost" data-close>Close</button>';
+    if(user){
+      B.innerHTML=`<p class="note">Signed in to the TWX team login as <b>${esc(user.email||'')}</b>. Jobs and photos sync automatically on every device signed in to it.</p>
+        <p class="note" id="sStat">${esc(statusLine())}</p>
+        <label>Change team password<input id="sNew" type="password" autocomplete="new-password" placeholder="New password (8+ characters)"></label>
+        <p class="err" id="sErr">${esc(err)}</p>`;
+      A.innerHTML=`<button class="btn dark" value="pw">Change password</button><button type="button" class="btn ghost" id="sNow">Sync now</button><button type="button" class="btn ghost" id="sOut">Sign out here</button>${close}`;
+      return;
+    }
+    B.innerHTML=(setup?`<p class="note">One-time setup: enter the setup code, then choose the team email and password every PM will use to sign in.</p>
+        <label>Setup code<input id="sCode" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX-XXXX"></label>`
+      :`<p class="note">Sign in with the TWX team login to sync jobs and photos between your devices.</p>`)+
+      `<label>Team email<input id="sEmail" type="email" autocomplete="username" autocapitalize="off" spellcheck="false" value="${esc(ls.get('twx.sync.email')||'')}"></label>
+       <label>Password<input id="sPass" type="password" autocomplete="${setup?'new-password':'current-password'}"></label>
+       <p class="err" id="sErr">${esc(err)}</p>
+       <a href="#" class="lnk" id="sMode">${setup?'Back to sign in':'First time? Set up the team login'}</a>`;
+    A.innerHTML=`<button class="btn dark" value="go">${setup?'Create team login':'Sign in'}</button>${close}`;
+  }
+  function open(){
+    paintDlg();$('#dlgSync').showModal();
+    if(user){const h=$('#dlgSync .panel-h');h.tabIndex=-1;h.focus();return}   // don't pop the phone keyboard just to show status
+    const f=$('#sCode')||($('#sEmail')&&!$('#sEmail').value?$('#sEmail'):$('#sPass'));if(f)f.focus();
+  }
+  async function signIn(email,password){
+    await client();
+    const {data,error}=await sb.auth.signInWithPassword({email,password});
+    if(error)throw new Error(/invalid login/i.test(error.message)?'Wrong email or password.':error.message);
+    user=data.user;ls.set('twx.sync.email',email);
+    try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(_){}
+    kick(0);
+  }
+  async function submit(){
+    const err=t=>{const e=$('#sErr');if(e)e.textContent=t},btn=$('#syncAct .btn.dark');
+    if(btn)btn.disabled=true;
+    try{
+      if(user){
+        const np=$('#sNew').value||'';if(np.length<8)return err('Use a password with at least 8 characters.');
+        chk(await sb.auth.updateUser({password:np}));
+        await sb.auth.signOut({scope:'others'}).catch(()=>{});
+        $('#dlgSync').close();toast('Team password changed. Other devices will need the new password to sign in again.',7000);return;
+      }
+      const email=($('#sEmail').value||'').trim().toLowerCase(),pass=$('#sPass').value||'';
+      if(!email||!pass)return err('Enter the team email and password.');
+      if(setup){
+        const code=($('#sCode').value||'').trim();if(!code)return err('Enter the setup code.');
+        if(pass.length<8)return err('Use a password with at least 8 characters.');
+        let res,j={};
+        try{res=await fetch(CLOUD.url+'/functions/v1/team-setup',{method:'POST',headers:{'Content-Type':'application/json',apikey:CLOUD.key},body:JSON.stringify({code,email,password:pass})});j=await res.json().catch(()=>({}))}
+        catch(_){return err('Could not reach the server. Check the connection and try again.')}
+        if(!res.ok)return err(j.error||'Setup failed.');
+        setup=false;
+      }
+      await signIn(email,pass);
+      $('#dlgSync').close();toast('Signed in. Syncing your jobs and photos…',4000);
+    }catch(e){
+      const m=String(e&&e.message||e);
+      err(/fetch|network|offline|load failed/i.test(m)?'Could not reach the server. Check the connection and try again.':m.replace(/^Error: /,''));
+    }finally{if(btn)btn.disabled=false}
+  }
+  $('#bSync').addEventListener('click',()=>{if(!started)return;if(!sb)start();open()});
+  $('#fSync').addEventListener('submit',e=>{e.preventDefault();submit()});
+  $('#dlgSync').addEventListener('click',async e=>{
+    if(e.target.id==='sMode'){e.preventDefault();setup=!setup;paintDlg();($('#sCode')||$('#sEmail')).focus()}
+    if(e.target.id==='sNow'){kick(0);toast('Syncing…',1500)}
+    if(e.target.id==='sOut'){
+      if(!confirm('Sign this device out of cloud sync? Jobs already on this device stay here.'))return;
+      await sb.auth.signOut({scope:'local'}).catch(()=>{});user=null;setState('signin');$('#dlgSync').close();
+    }
+  });
+  setInterval(()=>{if(user&&document.visibilityState==='visible')kick(0)},45000);
+  document.addEventListener('visibilitychange',()=>{if(user&&document.visibilityState==='visible')kick(800)});
+  window.addEventListener('online',()=>{if(!started)return;if(!sb)start();else if(user)kick(800)});
+  return{start,touch,syncNow:()=>kick(0),get state(){return state},get user(){return user}};
+})();
+
 /* ---- export a standalone slideshow file ---- */
 async function exportShow(Ds,title,date){
   toast('Building slideshow file…',60000);
@@ -1092,6 +1359,7 @@ $('#bExport').addEventListener('click',()=>{if(P&&mapObj)exportShow([buildShowDa
     if(!window.indexedDB)throw new Error('this browser has no IndexedDB');
     await Promise.race([DB.open(),new Promise((_,rej)=>setTimeout(()=>rej(new Error('the browser never answered the storage request')),6000))]);
     await migrate();await showHome();
+    Sync.start();
   }catch(e){
     console.error(e);
     msg('The app could not start: '+(e&&e.message||e)+'. Open the link directly in Chrome, Edge or Safari (not inside an email, Teams, Slack or GitHub app), outside private/incognito mode, and close any other tabs with this app.');

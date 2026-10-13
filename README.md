@@ -3,7 +3,7 @@
 A single-page web app for building photo-location slideshows for the weekly PM meeting.
 
 - `index.html` is the whole app. There is nothing to install or build.
-- Photos, maps and jobs are stored **in each person's own browser** (not in this repository), so no job data or photos are ever uploaded here.
+- Photos, maps and jobs are saved in each browser first, then synced through the TWX Supabase project when signed in to the team login. Nothing is ever stored in this repository.
 - Do not commit photos or exported slideshow files to this repository.
 
 ## Run it
@@ -17,4 +17,12 @@ On iPad/iPhone: open it in Safari, tap Share -> Add to Home Screen, and launch i
 - **Restore a backup**: on the home page of the other device. It merges: each job keeps whichever copy was edited last, and nothing else on that device is touched.
 - Move the file with Google Drive, OneDrive, or AirDrop (backups with photos are usually too big for email).
 - PMs can send backups to each other. A PM with the same name, or a meeting on the same date, is merged, not duplicated.
+
+## Cloud sync (Supabase)
+- Tap the **Sign in** button (top right) and sign in with the shared TWX team login. Everything then syncs automatically between every device signed in to it. The dot shows the state: green = synced, amber = syncing, grey = offline.
+- The app keeps working with no signal. Changes are saved on the device and sync when it's back online.
+- If two devices change the same job, the newest edit wins. Deletes sync too.
+- Cloud copies of photos are compressed to save space (the full-size originals stay on the device that added them).
+- Setup and password reset use a one-time setup code (ask Micah). **Change team password** in the sync panel signs every other device out.
+- Backend: Supabase project `TWX Site Photo Map` (`ztafovkhwhnyctksdelo`): `items` table + `push_items()` (newest edit wins), private `photos` bucket, row-level security that only lets the team login in, and the `team-setup` edge function. The key in `index.html` is the public publishable key; access is enforced by those security rules.
 
