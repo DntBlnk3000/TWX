@@ -290,7 +290,7 @@ dialog .lnk{color:var(--ink);font-weight:700;font-size:14px}
 </dialog>
 
 <input type="file" id="fileMap" accept="image/*" class="hide">
-<input type="file" id="filePhotos" accept="image/*,.heic,.heif" multiple class="hide">
+<input type="file" id="filePhotos" accept="image/*,.heic,.heif,.zip,.pdf,application/zip,application/pdf" multiple class="hide">
 <input type="file" id="fileFolder" webkitdirectory multiple class="hide">
 <input type="file" id="fileBackup" class="hide">
 <dialog id="dlgSync"><form method="dialog" id="fSync" novalidate><div class="panel-h">Cloud sync</div><div class="body" id="syncBody"></div><div class="act wrap" id="syncAct"></div></form></dialog>
@@ -480,10 +480,10 @@ async function showHome(){
 }
 async function showPM(id){
   P=null;sel=null;curMeeting=null;curPM=await DB.get('pms',id);if(!curPM)return showHome();
-  chrome('home',curPM.name);
+  chrome('home',curPM.name);Sync.follow(id);
   const projs=(await DB.all('projects')).filter(p=>p.pmId===id),mtgs=(await DB.all('meetings')).filter(m=>m.pmId===id).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   const mcards=mtgs.map(m=>{const n=orderedJobIds(m,projs).length;
-    return`<div class="card pm" data-mtg="${m.id}"><div class="thumb ini">${esc(shortDate(m.date)||'—')}</div><div class="meta"><h3>${esc(numDate(m.date))}</h3><div class="sub">${n} job${n===1?'':'s'}</div><div style="margin-top:10px"><span class="tag dark" data-pres="${m.id}">&#9654; Present</span></div></div><button class="x" title="Delete this meeting date and its jobs" data-delmtg="${m.id}">&times;</button></div>`}).join('');
+    return`<div class="card pm" data-mtg="${m.id}"><div class="thumb ini">${esc(shortDate(m.date)||'—')}</div><div class="meta"><h3>${esc(numDate(m.date))}</h3><div class="sub">${n} job${n===1?'':'s'}${expiryOf(m)?` · auto-deletes ${esc(numDate(expiryOf(m)))}`:''}</div><div style="margin-top:10px"><span class="tag dark" data-pres="${m.id}">&#9654; Present</span></div></div><button class="x" title="Delete this meeting date and its jobs" data-delmtg="${m.id}">&times;</button></div>`}).join('');
   const loose=projs.filter(p=>!mtgs.some(m=>m.id===p.meetingId)).sort((a,b)=>b.updated-a.updated);
   const lcards=[];
   for(const p of loose){
@@ -497,7 +497,7 @@ async function showPM(id){
 }
 async function showMeeting(id){
   P=null;sel=null;curMeeting=await DB.get('meetings',id);if(!curMeeting)return showHome();
-  curPM=await DB.get('pms',curMeeting.pmId);chrome('home',curPM?curPM.name:'Meeting');
+  curPM=await DB.get('pms',curMeeting.pmId);chrome('home',curPM?curPM.name:'Meeting');Sync.follow(curMeeting.pmId);
   const projs=(await DB.all('projects')).filter(p=>p.pmId===curMeeting.pmId),byId=Object.fromEntries(projs.map(p=>[p.id,p]));
   curMeeting.jobIds=orderedJobIds(curMeeting,projs);
   const rows=[];
@@ -507,20 +507,64 @@ async function showMeeting(id){
     rows.push(`<div class="mrow" draggable="true" data-i="${k}" data-id="${jid}"><span class="grip" title="Drag to reorder">&#8942;&#8942;</span><b class="no">${k+1}</b><div class="mth" style="${thumb?`background-image:url(${thumb})`:''}"></div><div class="mi"><h3>${esc(p.name)}</h3><div class="sub">${p.mapId?`${p.pins.length} photo${p.pins.length===1?'':'s'} on the map`:'<b style="color:#b45309">No site map yet — will be skipped</b>'}</div></div><div class="ma"><button data-up title="Move up">&#9650;</button><button data-dn title="Move down">&#9660;</button><button data-open title="Open job">Open</button><button data-rmj title="Delete job">&times;</button></div></div>`);
   }
   $('#home').innerHTML=`<section class="hero"><p><a href="#" id="bkPM" style="color:var(--amber);font-weight:700">&larr; ${esc(curPM?curPM.name:'Back')}</a></p>
-    <h2>Meeting ${esc(numDate(curMeeting.date))}</h2><div class="mdate"><input type="date" id="mDate" value="${esc(curMeeting.date||'')}"> <span>${curMeeting.jobIds.length} job${curMeeting.jobIds.length===1?'':'s'}</span></div>
+    <h2>Meeting ${esc(numDate(curMeeting.date))}</h2><div class="mdate"><input type="date" id="mDate" value="${esc(curMeeting.date||'')}"> <span>${curMeeting.jobIds.length} job${curMeeting.jobIds.length===1?'':'s'}${expiryOf(curMeeting)?` · auto-deletes ${esc(numDate(expiryOf(curMeeting)))} with its photos`:''}</span></div>
     <div class="mbtns"><button class="btn amber" id="mPresent">&#9654; Present meeting</button><button class="btn" id="cNew">+ New job</button><button class="btn ghost" id="mExport">Export slideshow</button><button class="btn ghost" id="bBackup" title="Save this meeting's jobs and photos into one file">&#8681; Back up</button></div></section>
     <div class="mlist">${rows.join('')||'<div class="mempty">No jobs yet. Click <b>+ New job</b> to add the first one.</div>'}</div>`;
 }
 async function saveMtg(){curMeeting.updated=Date.now();await DB.put('meetings',curMeeting)}
 async function jobsData(ids){const Ds=[];for(const id of ids){const D=await showDataFor(id);if(D)Ds.push(D)}return Ds}
 async function idsForMeeting(m){return orderedJobIds(m,await DB.all('projects'))}
+// download any photos these jobs still need on this device, then build the slides
+async function readyJobs(ids){
+  const projs=(await Promise.all(ids.map(id=>DB.get('projects',id)))).filter(Boolean);
+  const r=await Sync.ensure(projs);
+  return{Ds:await jobsData(ids),lost:r.missing&&!r.sure?r.missing:0};
+}
+const lostMsg=n=>`${n} photo${n===1?' has':'s have'} not downloaded to this device yet (no connection?) and ${n===1?'is':'are'} left out.`;
 async function presentIds(ids,date){
-  toast('Loading meeting…',60000);const Ds=await jobsData(ids);document.querySelectorAll('.toast').forEach(x=>x.remove());
+  const {Ds,lost}=await readyJobs(ids);
   if(!Ds.length)return toast('None of these jobs have a site map yet');
   startShow(Ds,{date});
+  if(lost)toast(lostMsg(lost),7000);
 }
-async function deleteProject(id){const bl=await DB.byPid(id);for(const b of bl)await DB.del('blobs',b.id);await DB.del('projects',id)}
+async function deleteProject(id){const bl=await DB.byPid(id);for(const b of bl)await DB.del('blobs',b.id);await DB.del('projects',id)}   // cloud sync also clears this job's cloud photos that never came to this device
 async function deleteMeeting(m){const projs=(await DB.all('projects')).filter(p=>p.meetingId===m.id);for(const p of projs)await deleteProject(p.id);await DB.del('meetings',m.id)}
+
+/* ================= 2-week cleanup =================
+   A meeting date, with its jobs, site maps and photos, is deleted 14 days after the meeting date,
+   on this device and (through sync) in the cloud and on every other device.
+   A meeting created after its date (or given a past date by mistake) gets 14 days from when it was created.
+   Jobs with no meeting date go 14 days after their last edit. */
+const KEEP_DAYS=14;
+const dayKey=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+function expiryOf(m){
+  let base=m.created?dayKey(new Date(m.created)):'';
+  if(m.date&&m.date>base)base=m.date;
+  if(!base)return'';
+  const [y,mo,d]=base.split('-').map(Number);return dayKey(new Date(y,mo-1,d+KEEP_DAYS));
+}
+let cleanedAt=0,cleaning=false;
+async function cleanupOld(){
+  if(EMBED||cleaning||Date.now()-cleanedAt<120000)return;
+  const today=dayKey(new Date());
+  if(P||opening||$('#show')||document.querySelector('dialog[open]')||$('#busy'))return;   // never pull a job out from under someone; it runs again later
+  cleaning=true;
+  try{
+    const mtgs=await DB.all('meetings'),projs=await DB.all('projects'),cutoff=Date.now()-KEEP_DAYS*864e5;
+    const old=mtgs.filter(m=>{const e=expiryOf(m);return e&&e<=today});
+    const loose=projs.filter(p=>!mtgs.some(m=>m.id===p.meetingId)&&stampOf(p)&&stampOf(p)<cutoff);
+    for(const m of old)await deleteMeeting(m);
+    for(const p of loose)await deleteProject(p.id);
+    cleanedAt=Date.now();
+    if(!old.length&&!loose.length)return;
+    if(P||$('#show'))return;
+    if(curMeeting&&old.some(m=>m.id===curMeeting.id))await showPM(curMeeting.pmId);
+    else if(curMeeting)await showMeeting(curMeeting.id);else if(curPM)await showPM(curPM.id);else await showHome();
+    const what=old.length?`${old.length} meeting date${old.length===1?'':'s'} (${old.map(m=>numDate(m.date)).join(', ')})`:`${loose.length} job${loose.length===1?'':'s'}`;
+    toast(`Cleared ${what} older than 2 weeks`,6000);
+  }catch(e){console.error('cleanup',e)}
+  finally{cleaning=false}
+}
 
 $('#home').addEventListener('click',async e=>{
   const t=e.target;
@@ -552,7 +596,9 @@ $('#home').addEventListener('click',async e=>{
   const c=t.closest('.card[data-id]');if(c){origin=null;return openProject(c.dataset.id)}
   if(!curMeeting)return;
   if(t.closest('#mPresent'))return presentIds(await idsForMeeting(curMeeting),curMeeting.date);
-  if(t.closest('#mExport')){const Ds=await jobsData(await idsForMeeting(curMeeting));if(!Ds.length)return toast('None of these jobs have a site map yet');return exportShow(Ds,(curPM?curPM.name+' ':'')+numDate(curMeeting.date),curMeeting.date)}
+  if(t.closest('#mExport')){const {Ds,lost}=await readyJobs(await idsForMeeting(curMeeting));if(!Ds.length)return toast('None of these jobs have a site map yet');
+    if(lost&&!confirm(lostMsg(lost)+' Export anyway?'))return;
+    return exportShow(Ds,(curPM?curPM.name+' ':'')+numDate(curMeeting.date),curMeeting.date)}
   const row=t.closest('.mrow');if(!row)return;const i=+row.dataset.i,ids=curMeeting.jobIds;
   if(t.closest('[data-up]')&&i>0){[ids[i-1],ids[i]]=[ids[i],ids[i-1]];await saveMtg();return showMeeting(curMeeting.id)}
   if(t.closest('[data-dn]')&&i<ids.length-1){[ids[i+1],ids[i]]=[ids[i],ids[i+1]];await saveMtg();return showMeeting(curMeeting.id)}
@@ -601,7 +647,8 @@ document.addEventListener('dragend',()=>{dragM=null;document.querySelectorAll('.
 
 /* job's meeting-date picker in the editor header */
 async function fillMeetingPicker(){
-  const s2=$('#pmeet'),mtgs=(await DB.all('meetings')).filter(m=>m.pmId===P.pmId).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const job=P,all=await DB.all('meetings');if(!job||P!==job)return;     // the job was left before the list loaded
+  const s2=$('#pmeet'),mtgs=all.filter(m=>m.pmId===P.pmId).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   s2.innerHTML=(mtgs.some(m=>m.id===P.meetingId)?'':'<option value="">Pick a meeting date…</option>')+mtgs.map(m=>`<option value="${m.id}">Meeting ${esc(numDate(m.date))}</option>`).join('');
   s2.value=P.meetingId||'';
 }
@@ -616,17 +663,30 @@ $('#pmeet').addEventListener('change',async e=>{
 });
 
 /* ================= EDITOR ================= */
+let opening=null;    // a job is loading; background sync and cleanup leave the screen alone until it's open
 async function openProject(id){
-  P=await DB.get('projects',id);
-  {const _pm=await DB.get('pms',P.pmId);curPMName=_pm?_pm.name:''}
-  photos={};mapObj=null;sel=null;
-  for(const b of await DB.byPid(id)){
-    if(b.id===P.mapId)mapObj={src:URL.createObjectURL(b.blob),tsrc:URL.createObjectURL(b.thumb),w:b.w,h:b.h};
-    else photos[b.id]={...b,src:URL.createObjectURL(b.blob),tsrc:URL.createObjectURL(b.thumb)};
-  }
-  P.photoIds=P.photoIds.filter(i=>photos[i]);P.pins=P.pins.filter(p=>photos[p.id]);
-  sel=nextUnplaced()||(P.pins[0]&&P.pins[0].id)||null;
-  buildEditor();
+  opening=id;
+  try{
+    let p=await DB.get('projects',id);if(!p)return showHome();
+    Sync.follow(p.pmId);
+    // photos that haven't come down yet must never be dropped from the job, so it only opens once they're here
+    const r=await Sync.ensure([p]);
+    if(r.missing&&!r.sure){
+      toast(r.why,8000);if(P&&P.id===id)P=null;
+      return origin&&origin.t==='mtg'?showMeeting(origin.id):showPM(p.pmId);
+    }
+    p=await DB.get('projects',id);if(!p)return showHome();          // pick up any change that synced in while downloading
+    const pm=await DB.get('pms',p.pmId),bl=await DB.byPid(id);
+    // everything is loaded; switch to the job in one step so nothing can interleave
+    P=p;curPMName=pm?pm.name:'';photos={};mapObj=null;sel=null;
+    for(const b of bl){
+      if(b.id===P.mapId)mapObj={src:URL.createObjectURL(b.blob),tsrc:URL.createObjectURL(b.thumb),w:b.w,h:b.h};
+      else photos[b.id]={...b,src:URL.createObjectURL(b.blob),tsrc:URL.createObjectURL(b.thumb)};
+    }
+    P.photoIds=P.photoIds.filter(i=>photos[i]);P.pins=P.pins.filter(p=>photos[p.id]);
+    sel=nextUnplaced()||(P.pins[0]&&P.pins[0].id)||null;
+    buildEditor();
+  }finally{if(opening===id)opening=null}
 }
 function buildEditor(){
   chrome('editor');$('#pname').value=P.name;fillMeetingPicker();
@@ -644,13 +704,13 @@ function buildEditor(){
   <div class="strip"><div class="lab">Slide<br>order</div><div class="chips" id="chips"></div></div>
   <aside class="side">
     <div class="panel-h">Photos <small id="pcount"></small></div>
-    <div class="tray-tools"><button class="btn sm dark" id="bAddP">+ Add photos</button><button class="btn sm ghost" id="bAddF">+ Folder</button><label><input type="checkbox" id="onlyUn"> Unplaced only</label></div>
+    <div class="tray-tools"><button class="btn sm dark" id="bAddP" title="Photos, or a Procore ZIP or PDF photo export">+ Add photos</button><button class="btn sm ghost" id="bAddF">+ Folder</button><label><input type="checkbox" id="onlyUn"> Unplaced only</label></div>
     <div class="tray" id="tray"></div>
     <div class="detail" id="detail"></div>
   </aside>`;
   scene=new Scene($('#msvg'));
   $('#szr').value=P.size||1;
-  if(mapObj){scene.setMap(mapObj);requestAnimationFrame(()=>{view=scene.fit();refreshAll()})}
+  if(mapObj){const job=P;scene.setMap(mapObj);requestAnimationFrame(()=>{if(P!==job)return;view=scene.fit();refreshAll()})}   // skip if the job was left before the next frame
   refreshAll();
 }
 function refreshAll(){
@@ -665,7 +725,7 @@ function refreshMap(){
   $('#msvg').classList.toggle('armed',!!sel&&!pinOf(sel));
 }
 function refreshHint(){
-  const h=$('#hint');if(!h)return;
+  const h=$('#hint');if(!h||!P)return;
   if(!mapObj){h.classList.add('hide');return}
   h.classList.remove('hide');
   if(!P.photoIds.length)h.innerHTML='Now <b>add your photos</b> in the panel';
@@ -679,7 +739,7 @@ function refreshTray(){
   const only=$('#onlyUn').checked;
   const ids=P.photoIds.filter(id=>!only||!pinOf(id));
   $('#pcount').textContent=`${P.photoIds.length} photos · ${P.pins.length} placed`;
-  if(!P.photoIds.length){t.innerHTML='<div class="drop"><b>Add photos or a whole folder</b><br>they stay on this device</div>';return}
+  if(!P.photoIds.length){t.innerHTML='<div class="drop"><b>Add photos or a whole folder</b><br>or drop in a Procore ZIP or PDF export</div>';return}
   t.innerHTML=ids.map(id=>{const p=pinOf(id);const n=p?P.pins.indexOf(p)+1:'';return`<div class="th${p?' placed':''}${id===sel?' sel':''}" data-id="${id}" title="${esc(photos[id].name)}" style="background-image:url(${photos[id].tsrc})">${p?`<i>${n}</i>`:''}</div>`}).join('')||'<div class="drop">Everything is placed</div>';
 }
 function refreshStrip(){
@@ -828,6 +888,126 @@ document.addEventListener('drop',e=>{
 });
 document.addEventListener('dragend',()=>{dragI=null;document.querySelectorAll('.chip.dragover').forEach(x=>x.classList.remove('dragover'))});
 
+/* ---- Procore exports: a .zip download or a .pdf photo report is split into separate photos ---- */
+const isZip=f=>/\.zip$/i.test(f.name)||/^application\/(x-)?zip(-compressed)?$/i.test(f.type);
+const isPdf=f=>/\.pdf$/i.test(f.name)||f.type==='application/pdf';
+const isBundle=f=>isZip(f)||isPdf(f);
+const IMG_EXT=/\.(jpe?g|png|gif|webp|bmp|avif|hei[cf]|tiff?)$/i;
+const mimeOf=n=>{const e=(n.match(/\.([a-z0-9]+)$/i)||[,''])[1].toLowerCase();return{jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',gif:'image/gif',webp:'image/webp',bmp:'image/bmp',avif:'image/avif',heic:'image/heic',heif:'image/heif',tif:'image/tiff',tiff:'image/tiff'}[e]||''};
+function loadScript(urls,ready){
+  return(async()=>{for(const u of urls){if(ready())return;try{await new Promise((res,rej)=>{const s=document.createElement('script');s.src=u;s.onload=res;s.onerror=()=>{s.remove();rej()};document.head.appendChild(s)})}catch(_){}}
+    if(!ready())throw new Error('could not load a helper (check the internet connection)')})();
+}
+async function inflateRaw(blob){
+  let ds=null;try{ds=new DecompressionStream('deflate-raw')}catch(_){}
+  if(ds)return await new Response(blob.stream().pipeThrough(ds)).blob();
+  await loadScript(['https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js','https://unpkg.com/fflate@0.8.2/umd/index.js'],()=>!!window.fflate);
+  return new Blob([window.fflate.inflateSync(new Uint8Array(await blob.arrayBuffer()))]);
+}
+// reads the zip's table of contents, then pulls out only the image files, one at a time
+async function zipImages(file){
+  const u8=async(a,b)=>new Uint8Array(await file.slice(a,b).arrayBuffer());
+  const tl=Math.min(file.size,65557),tail=await u8(file.size-tl,file.size),tv=new DataView(tail.buffer);
+  let e=-1;for(let i=tail.length-22;i>=0;i--)if(tv.getUint32(i,true)===0x06054b50){e=i;break}
+  if(e<0)throw new Error('it is not a zip file');
+  let count=tv.getUint16(e+10,true),cdSize=tv.getUint32(e+12,true),cdOff=tv.getUint32(e+16,true);
+  if((cdOff===0xFFFFFFFF||count===0xFFFF)&&e>=20&&tv.getUint32(e-20,true)===0x07064b50){   // zip64 (very large downloads)
+    const at=Number(tv.getBigUint64(e-12,true)),z=new DataView((await u8(at,at+56)).buffer);
+    count=Number(z.getBigUint64(32,true));cdSize=Number(z.getBigUint64(40,true));cdOff=Number(z.getBigUint64(48,true));
+  }
+  const cd=await u8(cdOff,cdOff+cdSize),cv=new DataView(cd.buffer),dec=new TextDecoder(),list=[];
+  for(let p=0,i=0;i<count&&p+46<=cd.length&&cv.getUint32(p,true)===0x02014b50;i++){
+    const flags=cv.getUint16(p+8,true),method=cv.getUint16(p+10,true),nl=cv.getUint16(p+28,true),xl=cv.getUint16(p+30,true),cl=cv.getUint16(p+32,true);
+    let csize=cv.getUint32(p+20,true),usize=cv.getUint32(p+24,true),off=cv.getUint32(p+42,true);
+    const name=dec.decode(cd.subarray(p+46,p+46+nl));
+    for(let q=p+46+nl,end=q+xl;q+4<=end;){const id=cv.getUint16(q,true),sz=cv.getUint16(q+2,true);
+      if(id===1){let r=q+4;if(usize===0xFFFFFFFF){usize=Number(cv.getBigUint64(r,true));r+=8}if(csize===0xFFFFFFFF){csize=Number(cv.getBigUint64(r,true));r+=8}if(off===0xFFFFFFFF)off=Number(cv.getBigUint64(r,true))}
+      q+=4+sz}
+    list.push({name,method,csize,off,locked:flags&1});
+    p+=46+nl+xl+cl;
+  }
+  const out=[];let skipped=0;
+  const imgs=list.filter(z=>IMG_EXT.test(z.name)&&!/(^|\/)(__MACOSX\/|\.)/.test(z.name));
+  for(const [k,z] of imgs.entries()){
+    busy(`Opening ${file.name}… ${k+1} of ${imgs.length}`);
+    try{
+      const h=new DataView((await u8(z.off,z.off+30)).buffer);
+      if(z.locked||h.getUint32(0,true)!==0x04034b50||(z.method!==0&&z.method!==8)){skipped++;continue}
+      const start=z.off+30+h.getUint16(26,true)+h.getUint16(28,true),raw=file.slice(start,start+z.csize);
+      const data=z.method===0?raw:await inflateRaw(raw);
+      out.push(new File([data],z.name.split('/').pop(),{type:mimeOf(z.name),lastModified:file.lastModified}));
+    }catch(err){console.warn(z.name,err);skipped++}
+  }
+  return{files:out,skipped};
+}
+let pdfLib=null;
+function loadPdf(){
+  if(pdfLib)return pdfLib;
+  const v='6.2.108',bases=[`https://cdn.jsdelivr.net/npm/pdfjs-dist@${v}/legacy/build/`,`https://unpkg.com/pdfjs-dist@${v}/legacy/build/`];
+  pdfLib=(async()=>{for(const b of bases){try{const m=await import(b+'pdf.min.mjs');m.GlobalWorkerOptions.workerSrc=b+'pdf.worker.min.mjs';return m}catch(e){console.warn('pdf reader',b,e)}}
+    pdfLib=null;throw new Error('could not load the PDF reader (check the internet connection)')})();
+  return pdfLib;
+}
+// an image object from the PDF reader onto a canvas, at most 4000px on the long side
+function pdfImgCanvas(img){
+  const w=img.width,h=img.height,k=Math.min(1,4000/Math.max(w,h)),tw=Math.round(w*k),th=Math.round(h*k);
+  if(img.bitmap)return resized(img.bitmap,tw,th);
+  if(!img.data||(img.kind!==2&&img.kind!==3))return null;          // 1-bit images are masks and line art, not photos
+  const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d'),id=x.createImageData(w,h),d=id.data,s=img.data;
+  if(img.kind===3)d.set(s);else for(let i=0,j=0,n=w*h*3;i<n;i+=3,j+=4){d[j]=s[i];d[j+1]=s[i+1];d[j+2]=s[i+2];d[j+3]=255}
+  x.putImageData(id,0,0);return k<1?resized(c,tw,th):c;
+}
+function fingerprint(c){
+  const f=document.createElement('canvas');f.width=f.height=12;const x=f.getContext('2d');x.drawImage(c,0,0,12,12);
+  return c.width+'x'+c.height+':'+Array.from(x.getImageData(0,0,12,12).data,v=>v>>4).join('');
+}
+// pulls the photos out of a PDF photo report in page order; logos and icons that repeat on every page are left out
+async function pdfImages(file){
+  busy(`Opening ${file.name}…`);
+  const lib=await loadPdf();
+  const task=lib.getDocument({data:new Uint8Array(await file.arrayBuffer()),isEvalSupported:false,disableFontFace:true}),doc=await task.promise;
+  const seen=new Map(),found=[];
+  try{
+    for(let n=1;n<=doc.numPages;n++){
+      busy(`Reading ${file.name}… page ${n} of ${doc.numPages}`);
+      const page=await doc.getPage(n),ops=await page.getOperatorList(),ids=[];
+      for(let i=0;i<ops.fnArray.length;i++){const fn=ops.fnArray[i];if((fn===lib.OPS.paintImageXObject||fn===lib.OPS.paintImageXObjectRepeat)&&typeof ops.argsArray[i][0]==='string')ids.push(ops.argsArray[i][0])}
+      for(const id of new Set(ids)){
+        const img=await new Promise(res=>{const st=id.startsWith('g_')?page.commonObjs:page.objs;const t=setTimeout(()=>res(null),15000);try{st.get(id,o=>{clearTimeout(t);res(o)})}catch(_){clearTimeout(t);res(null)}});
+        if(!img||Math.max(img.width,img.height)<200)continue;                   // icons and bullets
+        const key=img.ref?'r'+img.ref:null;
+        if(key&&seen.has(key)){seen.get(key).pages.add(n);continue}
+        const c=pdfImgCanvas(img);if(!c)continue;
+        const fp=fingerprint(c);
+        if(seen.has(fp)){seen.get(fp).pages.add(n);if(key)seen.set(key,seen.get(fp));continue}
+        const rec={pages:new Set([n]),w:img.width,h:img.height,blob:await new Promise(r=>c.toBlob(r,'image/jpeg',.95))};
+        seen.set(fp,rec);if(key)seen.set(key,rec);found.push(rec);
+      }
+      page.cleanup();
+    }
+  }finally{found.pages=doc.numPages;try{await task.destroy()}catch(_){}}
+  const base=file.name.replace(/\.pdf$/i,'').trim()||'Photo';
+  const keep=found.filter(r=>r.blob&&!(found.pages>1&&r.pages.size>1)&&!(Math.min(r.w,r.h)<300&&Math.max(r.w,r.h)/Math.min(r.w,r.h)>3));   // repeated header logos, banner strips
+  return{files:keep.map((r,k)=>new File([r.blob],`${base} - ${String(k+1).padStart(3,'0')}.jpg`,{type:'image/jpeg',lastModified:file.lastModified})),skipped:0};
+}
+// replace any .zip or .pdf in the list with the photos inside it
+async function expandBundles(files){
+  if(!files.some(isBundle))return files;
+  const out=[],notes=[];
+  try{
+    for(const f of files){
+      if(!isBundle(f)){out.push(f);continue}
+      try{
+        const r=isZip(f)?await zipImages(f):await pdfImages(f);
+        out.push(...r.files);
+        notes.push(r.files.length?`${r.files.length} photo${r.files.length===1?'':'s'} from ${f.name}${r.skipped?` (${r.skipped} could not be opened)`:''}`:`no photos found in ${f.name}`);
+      }catch(e){console.warn(f.name,e);notes.push(`could not open ${f.name}: ${e&&e.message||e}`)}
+    }
+  }finally{busy(null)}
+  toast(notes.join(' · ').replace(/^./,c=>c.toUpperCase()),6000);
+  return out;
+}
+
 /* ---- file intake ---- */
 async function setMap(file){
   if(!isImg(file))return toast('That file is not an image');
@@ -844,8 +1024,9 @@ async function setMap(file){
   }catch(err){console.error(err);toast('Could not read that map image (try JPG or PNG)')}
 }
 async function addPhotos(files){
-  files=[...files].filter(isImg).sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
-  if(!files.length)return toast('No images found');
+  const hadBundle=[...files].some(isBundle);
+  files=(await expandBundles([...files])).filter(isImg).sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
+  if(!files.length)return hadBundle?undefined:toast('No images found');
   let ok=0,bad=0,first=null;
   for(const f of files){
     toast(`Adding photos… ${ok+bad+1} / ${files.length}`,60000);
@@ -889,9 +1070,10 @@ document.addEventListener('drop',async e=>{
   const st=e.target.closest('#stage');
   let files=[];
   try{files=await filesFromDrop(e.dataTransfer)}catch(err){console.error(err)}
-  const imgs=files.filter(isImg);
+  const imgs=files.filter(f=>isBundle(f)||isImg(f));
   if(files.some(f=>/\.(crdownload|part|tmp)$/i.test(f.name)))return toast('That file is still downloading — wait for the download to finish, then try again');
-  if(!imgs.length)return toast(files.length?'Could not use that file ('+(files[0].name||'unnamed')+') — it does not look like an image':'The browser did not hand over a file. Drag it from a Windows folder, or use Add photos',7000);
+  if(!imgs.length)return toast(files.length?'Could not use that file ('+(files[0].name||'unnamed')+') — it does not look like an image, ZIP or PDF':'The browser did not hand over a file. Drag it from a Windows folder, or use Add photos',7000);
+  if(imgs.some(isBundle))return addPhotos(imgs);     // a Procore ZIP or PDF always adds photos, even when dropped on the map
   if(st){
     if(!mapObj||confirm('Replace the site map with this image? Your markers stay where they are.'))setMap(imgs[0]);
   }else addPhotos(imgs);
@@ -1017,6 +1199,8 @@ async function makeBackup(){
   flushSave();
   const S=await backupScope();
   if(!S.pms.length&&!S.projects.length)return toast('Nothing to back up yet');
+  const got=await Sync.ensure(S.projects,'Downloading photos for the backup');
+  if(got.missing&&!got.sure)return toast(`${got.missing} photo${got.missing===1?' has':'s have'} not downloaded to this device yet, so the backup would be missing them. Check the internet connection and try again.`,8000);
   busy('Preparing backup…');
   try{
     const parts=[],blobs=[];let off=0,nPhotos=0;
@@ -1125,9 +1309,11 @@ const Sync=(()=>{
     sb.auth.onAuthStateChange((ev,session)=>{user=session?session.user:null;if(ev==='SIGNED_OUT')setState('signin')});
     return sb;
   }
+  let startP=null;
   async function start(){
     started=true;setState('loading');
-    try{await client();const {data}=await sb.auth.getSession();user=data&&data.session?data.session.user:null}
+    startP=(async()=>{await client();const {data}=await sb.auth.getSession();user=data&&data.session?data.session.user:null})();
+    try{await startP}
     catch(e){setState('offline');return}
     if(!user)return setState('signin');
     kick(0);
@@ -1144,8 +1330,9 @@ const Sync=(()=>{
       const changed=new Set();
       await push();
       await pull(changed);
+      await catchUp(changed);
       lastOk=Date.now();setState('ok');
-      if(changed.size)refreshView(changed);
+      if(changed.size){refreshView(changed);cleanupOld()}
     }catch(e){
       console.error('sync',e);
       const m=String(e&&(e.message||e.error_description)||e);
@@ -1171,9 +1358,19 @@ const Sync=(()=>{
     // 1) deletes
     const tombs=[...S.values()].filter(r=>r.k.startsWith('tomb:'));
     if(tombs.length){
-      const paths=tombs.filter(t=>t.path).flatMap(t=>[t.path,t.path+'.t']);
-      if(paths.length){const r=await store.remove(paths);if(r.error)console.warn('photo cleanup',r.error)}
-      const rows=tombs.map(t=>({kind:t.kind,id:t.id,updated:t.at,deleted:true,data:{}}));
+      const dead=tombs.map(t=>({kind:t.kind,id:t.id,at:t.at,path:t.path||''})),gone=new Set(dead.filter(d=>d.kind==='blob').map(d=>d.id));
+      // a deleted job takes all of its cloud photos with it, including ones that never came down to this device
+      for(const t of tombs.filter(t=>t.kind==='project'))
+        for(const r of chk(await sb.from('items').select('id,data').eq('kind','blob').eq('deleted',false).eq('data->>pid',t.id)))
+          if(!gone.has(r.id)){gone.add(r.id);dead.push({kind:'blob',id:r.id,at:t.at,path:r.data&&r.data.path||''})}
+      // find where a deleted photo's cloud copy lives when this device never knew
+      const nop=dead.filter(d=>d.kind==='blob'&&!d.path).map(d=>d.id);
+      for(let j=0;j<nop.length;j+=100)
+        for(const r of chk(await sb.from('items').select('id,data').eq('kind','blob').in('id',nop.slice(j,j+100)))){
+          const d=dead.find(x=>x.kind==='blob'&&x.id===r.id);if(d&&r.data&&r.data.path)d.path=r.data.path}
+      const paths=dead.filter(d=>d.path).flatMap(d=>[d.path,d.path+'.t']);
+      for(let j=0;j<paths.length;j+=200){const r=await store.remove(paths.slice(j,j+200));if(r.error)console.warn('photo cleanup',r.error)}
+      const rows=dead.map(d=>({kind:d.kind,id:d.id,updated:d.at,deleted:true,data:{}}));
       for(let j=0;j<rows.length;j+=100)chk(await sb.rpc('push_items',{rows:rows.slice(j,j+100)}));
       for(const t of tombs){await rawDel('sync',t.k);await rawDel('sync',t.kind+':'+t.id)}
     }
@@ -1197,18 +1394,61 @@ const Sync=(()=>{
     for(let j=0;j<rows.length;j+=100)chk(await sb.rpc('push_items',{rows:rows.slice(j,j+100)}));
     for(const d of done)await rawPut('sync',d);
   }
-  async function fetchBlobs(p){
-    const ids=[p.mapId,...(p.photoIds||[])].filter(Boolean);if(!ids.length)return;
+  /* Photos only come down for the PM picked on this device (the last PM, meeting or job opened here).
+     Other PMs' jobs still sync (names, dates, pins); their photos download when one of their jobs is opened,
+     presented, exported or backed up. */
+  const idsOf=p=>[p.mapId,...(p.photoIds||[])].filter(Boolean);
+  let followPM=ls.get('twx.sync.pm')||'',followFresh=true;const checked=new Map();
+  function follow(pmId){
+    if(!pmId||EMBED)return;
+    if(pmId!==followPM){followPM=pmId;ls.set('twx.sync.pm',pmId);followFresh=true;checked.clear()}
+    if(user&&followFresh)kick(300);
+  }
+  // download the photos these jobs use that are missing here or were changed in the cloud; returns the job ids that got photos
+  async function fetchFor(projs,prog){
+    const ids=[...new Set(projs.flatMap(idsOf))],got=new Set();if(!ids.length)return got;
     const metas=[];
     for(let j=0;j<ids.length;j+=100)metas.push(...chk(await sb.from('items').select('id,data,updated').eq('kind','blob').eq('deleted',false).in('id',ids.slice(j,j+100))));
-    const need=[];for(const m of metas){const l=await DB.get('blobs',m.id);if(!l||sigOf(l)!==m.data.sig)need.push(m)}
-    let k=0;const store=sb.storage.from(CLOUD.bucket),nm=String(p.name||'job').slice(0,24);
+    const need=[];
+    for(const m of metas){
+      const l=await DB.get('blobs',m.id);if(!l){need.push(m);continue}
+      const s=await DB.get('sync','blob:'+m.id);
+      if(sigOf(l)!==m.data.sig&&s&&s.sig===sigOf(l))need.push(m);      // changed in the cloud, and no unsent change on this device
+    }
+    let k=0;const store=sb.storage.from(CLOUD.bucket);
     for(const m of need){
-      const d=m.data;setState('syncing',`Downloading ${nm} ${++k}/${need.length}`);
+      const d=m.data;k++;if(prog)prog(k,need.length);else setState('syncing',`Downloading photos ${k}/${need.length}`);
       const full=chk(await store.download(d.path)),thumb=chk(await store.download(d.path+'.t'));
       await rawPut('blobs',{id:d.id,pid:d.pid,kind:d.kind,name:d.name,w:d.w,h:d.h,sig:d.sig,blob:full,thumb});
-      await rawPut('sync',{k:'blob:'+d.id,sig:d.sig,path:d.path,v:m.updated||0});
+      await rawPut('sync',{k:'blob:'+d.id,sig:d.sig,path:d.path,v:m.updated||0});got.add(d.pid);
     }
+    return got;
+  }
+  // bring the followed PM's photos up to date: a full check after switching PMs, then only jobs with photos missing here
+  async function catchUp(changed){
+    if(!followPM)return;
+    const mine=(await DB.all('projects')).filter(p=>p.pmId===followPM);
+    let todo=mine;
+    if(!followFresh){
+      todo=[];
+      for(const p of mine){if(checked.get(p.id)===stampOf(p))continue;for(const id of idsOf(p))if(!await DB.get('blobs',id)){todo.push(p);break}}
+    }
+    if(todo.length)for(const pid of await fetchFor(todo))changed.add(pid);
+    for(const p of todo)checked.set(p.id,stampOf(p));
+    followFresh=false;
+  }
+  /* make sure these jobs' photos are on this device before opening, presenting, exporting or backing them up.
+     missing: photos still not here. sure: true when those are gone for good (safe to drop from the job),
+     false when they exist in the cloud but could not come down right now. */
+  async function ensure(projs,label='Downloading photos'){
+    const missing=async()=>{let n=0;for(const p of projs)for(const id of idsOf(p))if(!await DB.get('blobs',id))n++;return n};
+    const n=await missing();if(!n)return{missing:0,sure:true};
+    if(startP)await startP.catch(()=>{});
+    if(!user)return{missing:n,sure:!ls.get('twx.sync.cursor'),why:'This job’s photos are in the cloud. Sign in to cloud sync (top right) to download them to this device.'};
+    try{busy(label+'…');await fetchFor(projs,(k,t)=>busy(`${label}… ${k} of ${t}`))}
+    catch(e){console.warn('download',e);return{missing:await missing(),sure:false,why:'This job’s photos have not downloaded to this device yet. Check the internet connection and try again.'}}
+    finally{busy(null)}
+    return{missing:await missing(),sure:true};
   }
   async function pull(changed){
     const cur=ls.get('twx.sync.cursor')||'';
@@ -1233,13 +1473,13 @@ const Sync=(()=>{
         }
         await rawDel('sync',r.kind+':'+r.id);continue;
       }
-      if(r.kind==='project')await fetchBlobs(r.data);             // photos land before the job that shows them
+      if(r.kind==='project'&&r.data&&r.data.pmId===followPM)await fetchFor([r.data]);   // the followed PM's photos land before the job that shows them
       await rawPut(st,r.data);await rawPut('sync',{k:r.kind+':'+r.id,v:r.updated});changed.add(r.id);
     }
     if(maxAt)ls.set('twx.sync.cursor',maxAt);
   }
   function refreshView(changed){
-    if($('#show'))return;                                          // never interrupt a slideshow
+    if($('#show')||opening||$('#busy'))return;                     // never interrupt a slideshow, a job that is opening, or a download
     if(P){
       if(!changed.has(P.id))return;
       const a=document.activeElement;if(a&&a.matches&&a.matches('input,textarea,select')){kick(20000);return}
@@ -1325,7 +1565,7 @@ const Sync=(()=>{
   setInterval(()=>{if(user&&document.visibilityState==='visible')kick(0)},45000);
   document.addEventListener('visibilitychange',()=>{if(user&&document.visibilityState==='visible')kick(800)});
   window.addEventListener('online',()=>{if(!started)return;if(!sb)start();else if(user)kick(800)});
-  return{start,touch,syncNow:()=>kick(0),get state(){return state},get user(){return user}};
+  return{start,touch,follow,ensure,syncNow:()=>kick(0),get state(){return state},get user(){return user}};
 })();
 
 /* ---- export a standalone slideshow file ---- */
@@ -1358,8 +1598,10 @@ $('#bExport').addEventListener('click',()=>{if(P&&mapObj)exportShow([buildShowDa
   try{
     if(!window.indexedDB)throw new Error('this browser has no IndexedDB');
     await Promise.race([DB.open(),new Promise((_,rej)=>setTimeout(()=>rej(new Error('the browser never answered the storage request')),6000))]);
-    await migrate();await showHome();
+    await migrate();await cleanupOld();await showHome();
     Sync.start();
+    setInterval(cleanupOld,5*60000);
+    document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')cleanupOld()});
   }catch(e){
     console.error(e);
     msg('The app could not start: '+(e&&e.message||e)+'. Open the link directly in Chrome, Edge or Safari (not inside an email, Teams, Slack or GitHub app), outside private/incognito mode, and close any other tabs with this app.');
