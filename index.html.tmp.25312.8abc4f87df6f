@@ -1,0 +1,1198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="TWX Photo Map">
+<meta name="theme-color" content="#FCB316">
+<title>TWX Site Photo Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;500;700;800;900&family=Rubik+Dirt&display=swap" rel="stylesheet">
+<style>
+:root{
+  --amber:#FCB316; --amber-d:#e0a000; --ink:#1a1a1a; --ink-2:#2a2a2a; --paper:#fff; --mist:#f3f2ee; --line:#e3e1d9; --mute:#6d6b63;
+  --display:"Rubik Dirt","Impact","Arial Black",sans-serif;
+  --body:"League Spartan","Segoe UI",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overscroll-behavior:none}
+/* body is pinned so iPad/iPhone Safari can never rubber-band or scroll the whole app */
+body{position:fixed;inset:0;width:100%;font-family:var(--body);font-weight:500;font-size:16px;color:var(--ink);background:var(--paper);overflow:hidden;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;-webkit-text-size-adjust:100%}
+input,select,textarea{-webkit-user-select:text;user-select:text}
+button,input,select{font:inherit;color:inherit}
+img{-webkit-user-drag:none}
+.hide{display:none!important}
+
+/* ---------- header (matches twolfx.com amber bar) ---------- */
+.top{position:relative;z-index:20;height:64px;background:var(--amber);display:flex;align-items:center;gap:18px;padding:0 24px 0 150px}
+.top::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(120deg,rgba(255,255,255,.22) 0 16px,transparent 16px 46px);-webkit-mask-image:linear-gradient(90deg,transparent 40%,#000);mask-image:linear-gradient(90deg,transparent 40%,#000);pointer-events:none}
+.top>*{position:relative}
+.logo{position:absolute;left:24px;top:0;width:104px;height:84px;background:#fff;border-radius:0 0 10px 10px;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,.18);cursor:pointer;z-index:2}
+.logo img{width:84px;height:auto}
+.logo b{display:none;font-weight:900;font-size:30px;letter-spacing:1px}
+.logo.fb img{display:none}.logo.fb b{display:block}
+.top h1{margin:0;font-family:var(--display);font-weight:400;font-size:22px;letter-spacing:2px;text-transform:uppercase;color:var(--ink);cursor:pointer}
+.top .grow{flex:1}
+.pmeet{font-weight:700;font-size:15px;background:var(--ink);color:var(--amber);border:0;padding:8px 12px;max-width:240px;cursor:pointer}
+.pname{background:transparent;border:0;border-bottom:2px dashed rgba(26,26,26,.35);font-family:var(--display);font-size:22px;letter-spacing:2px;text-transform:uppercase;padding:2px 4px;min-width:160px;max-width:40vw;flex:0 1 auto}
+.pname:focus{outline:none;border-bottom-color:var(--ink)}
+
+/* parallelogram buttons, like the site's tabs */
+.btn{--bg:#fff;--fg:var(--ink);appearance:none;border:0;cursor:pointer;background:var(--bg);color:var(--fg);font-weight:700;letter-spacing:.3px;padding:10px 26px;font-size:15px;clip-path:polygon(14px 0,100% 0,calc(100% - 14px) 100%,0 100%);transition:filter .15s,transform .15s;white-space:nowrap}
+.btn:hover{filter:brightness(.93)}
+.btn:active{transform:translateY(1px)}
+.btn.dark{--bg:var(--ink);--fg:var(--amber)}
+.btn.amber{--bg:var(--amber);--fg:var(--ink)}
+.btn.ghost{--bg:#eceae2}
+.btn.sm{padding:8px 20px;font-size:13px}
+.btn[disabled]{opacity:.4;pointer-events:none}
+.tag{display:inline-block;background:var(--amber);color:var(--ink);font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:6px 26px;font-size:14px;clip-path:polygon(12px 0,100% 0,calc(100% - 12px) 100%,0 100%)}
+.tag.dark{background:var(--ink);color:var(--amber)}
+
+/* ---------- home ---------- */
+#home{height:calc(100% - 64px);overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;background:var(--mist)}
+.hero{background:var(--ink);color:#fff;padding:44px 8vw 40px 8vw;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-60px;top:0;bottom:0;width:46%;background:repeating-linear-gradient(120deg,rgba(252,179,22,.18) 0 18px,transparent 18px 52px);pointer-events:none}
+.hero h2{margin:0 0 8px;font-family:var(--display);font-weight:400;font-size:clamp(34px,5vw,56px);letter-spacing:4px;text-transform:uppercase;color:var(--amber);position:relative}
+.hero p{margin:0;max-width:640px;font-size:19px;color:#ddd;position:relative}
+.hero .mdate{position:relative;display:flex;gap:14px;align-items:center;color:#ddd;font-size:18px;margin-top:6px}
+.hero .mdate input{background:#2a2a2a;border:2px solid #444;color:#fff;padding:6px 10px;font-size:16px;color-scheme:dark}
+.hero .mbtns{position:relative;z-index:2;display:flex;gap:12px;margin-top:22px;flex-wrap:wrap}
+.sec{margin:0;padding:30px 8vw 0;font-family:var(--display);font-weight:400;font-size:28px;letter-spacing:3px;text-transform:uppercase}
+.sec small{font-family:var(--body);font-size:15px;color:var(--mute);letter-spacing:.5px;text-transform:none;margin-left:8px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:22px;padding:34px 8vw 60px}
+.grid.tight{padding-top:16px;padding-bottom:10px}
+.card{background:#fff;border:1px solid var(--line);cursor:pointer;display:flex;flex-direction:column;transition:transform .15s,box-shadow .15s;position:relative}
+.card:hover{transform:translateY(-3px);box-shadow:0 10px 24px rgba(0,0,0,.12)}
+.card .thumb{aspect-ratio:16/10;background:#d9d6cb center/cover;display:flex;align-items:center;justify-content:center;color:var(--mute);font-weight:700;border-bottom:4px solid var(--amber)}
+.card .thumb.ini{font-family:var(--display);font-size:64px;letter-spacing:4px;color:var(--amber);background:var(--ink);aspect-ratio:16/8}
+.card .meta{padding:14px 16px 16px}
+.card h3{margin:0 0 4px;font-family:var(--display);font-weight:400;letter-spacing:1.5px;text-transform:uppercase;font-size:22px}
+.card.pm h3{font-size:26px}
+.card .sub{color:var(--mute);font-size:15px}
+.card .x{position:absolute;top:8px;right:8px;background:rgba(26,26,26,.8);color:#fff;border:0;width:36px;height:36px;cursor:pointer;font-size:18px;opacity:0;transition:opacity .15s}
+.card:hover .x{opacity:1}
+@media (hover:none){.card .x{opacity:1}}
+.card.new{align-items:center;justify-content:center;min-height:240px;border:3px dashed #cfcbbd;background:transparent;font-weight:800;font-size:20px;color:var(--mute);gap:6px}
+.card.new:hover{border-color:var(--amber);color:var(--ink)}
+.card.new .plus{font-size:54px;line-height:1;color:var(--amber)}
+.mlist{padding:26px 8vw 60px;display:flex;flex-direction:column;gap:10px}
+.mrow{display:flex;align-items:center;gap:14px;background:#fff;border:1px solid var(--line);border-left:6px solid var(--amber);padding:8px 12px 8px 8px;cursor:grab}
+.mrow.dragover{box-shadow:0 -4px 0 var(--amber)}
+.mrow .grip{color:#aaa;font-size:20px;letter-spacing:-4px;padding:0 6px}
+.mrow .no{flex:none;width:34px;height:34px;background:var(--ink);color:var(--amber);display:flex;align-items:center;justify-content:center;font-weight:800}
+.mrow .mth{flex:none;width:112px;height:70px;background:#d9d6cb center/cover}
+.mrow .mi{flex:1;min-width:0}.mrow h3{margin:0 0 3px;font-family:var(--display);font-weight:400;letter-spacing:1.5px;text-transform:uppercase;font-size:22px}
+.mrow .sub{color:var(--mute);font-size:15px}
+.mrow .ma{display:flex;gap:6px}
+.mrow .ma button{background:#eceae2;border:0;min-width:44px;height:44px;cursor:pointer;font-weight:700;padding:0 12px}
+.mrow .ma button:hover{background:var(--amber)}
+.mempty{padding:40px;text-align:center;color:var(--mute);font-size:19px;border:3px dashed #d4d1c4;background:#fff}
+
+/* ---------- editor ---------- */
+#editor{height:calc(100% - 64px);display:grid;grid-template-columns:1fr 500px;grid-template-rows:minmax(0,1fr) 118px;background:var(--mist)}
+.stage{position:relative;background:#cfcdc4;overflow:hidden;grid-row:1;grid-column:1;border-right:1px solid var(--line);min-height:0}
+.stage svg{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:default}
+.stage svg.armed{cursor:crosshair}
+.stage svg.panning{cursor:grabbing}
+.stage .mapimg{transform-origin:0 0}
+.stage.over::after{content:"Drop to set the site map";position:absolute;inset:12px;border:4px dashed var(--amber);background:rgba(252,179,22,.18);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:32px;letter-spacing:3px;text-transform:uppercase;z-index:5;pointer-events:none}
+.empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:30px;background:repeating-linear-gradient(120deg,#e9e7de 0 22px,#e3e1d6 22px 44px)}
+.empty h3{margin:0;font-family:var(--display);font-weight:400;font-size:34px;letter-spacing:3px;text-transform:uppercase}
+.empty p{margin:0;max-width:440px;color:var(--mute);font-size:18px}
+.mtop{position:absolute;left:14px;right:14px;top:34px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;z-index:4;pointer-events:none}
+.mtools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;pointer-events:none}
+.mtools>*{pointer-events:auto}
+/* site map tabs (only when a job has more than one map) */
+.mtabs{display:flex;gap:4px;flex-wrap:wrap;background:var(--ink);padding:5px;box-shadow:0 2px 8px rgba(0,0,0,.25);pointer-events:auto;max-width:100%}
+.mtab{appearance:none;border:0;cursor:pointer;background:#333;color:#fff;font-weight:700;font-size:15px;height:40px;padding:0 22px 0 18px;display:flex;align-items:center;gap:8px;max-width:270px;clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%)}
+.mtab:hover{background:#4a4a4a}
+.mtab b{flex:none;background:var(--amber);color:var(--ink);min-width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800}
+.mtab span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mtab small{flex:none;font-size:13px;opacity:.75}
+.mtab i{font-style:normal;font-size:12px}
+.mtab.on{background:var(--amber);color:var(--ink)}
+.mtab.on b{background:var(--ink);color:var(--amber)}
+.mmenu{position:absolute;z-index:6;background:#fff;min-width:230px;box-shadow:0 10px 30px rgba(0,0,0,.3);border-top:4px solid var(--amber);display:flex;flex-direction:column}
+.mmenu button{appearance:none;border:0;background:#fff;text-align:left;padding:14px 18px;font-weight:700;font-size:15px;cursor:pointer}
+.mmenu button:hover{background:#fff3cd}
+.mmenu button[disabled]{opacity:.35;pointer-events:none}
+.mmenu button.danger{color:#b42318}
+.mtools .grp{display:flex;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.mtools .grp button{border:0;background:#fff;width:44px;height:40px;cursor:pointer;font-size:19px;font-weight:700}
+.mtools .grp button:hover{background:var(--amber)}
+.mtools label{background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.2);height:40px;display:flex;align-items:center;gap:8px;padding:0 12px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.mtools input[type=range]{width:90px;accent-color:var(--ink)}
+.hint{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:9px 20px 9px 16px;font-size:16px;z-index:4;border-left:6px solid var(--amber);pointer-events:none;max-width:90%;text-align:center}
+.hint b{color:var(--amber)}
+
+.strip{grid-row:2;grid-column:1;background:#fff;border-top:1px solid var(--line);display:flex;align-items:stretch;overflow:hidden}
+.strip .lab{flex:none;width:112px;background:var(--ink);color:var(--amber);font-family:var(--display);letter-spacing:1.5px;text-transform:uppercase;display:flex;align-items:center;justify-content:center;text-align:center;padding:8px;font-size:17px;line-height:1.1}
+.chips{display:flex;gap:10px;align-items:center;padding:10px 14px;overflow-x:auto;-webkit-overflow-scrolling:touch;flex:1}
+.chip{flex:none;position:relative;width:114px;height:92px;background:#ddd center/cover;border:3px solid #fff;outline:1px solid var(--line);cursor:grab}
+.chip.sel{border-color:var(--amber);outline-color:var(--ink)}
+.chip.dragover{box-shadow:-6px 0 0 var(--amber)}
+.chip i{position:absolute;left:0;top:0;background:var(--ink);color:var(--amber);font-style:normal;font-weight:800;min-width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.chips .none{color:var(--mute);font-size:16px;padding:0 10px}
+/* map divider in the slide order: the slideshow switches to this map here */
+.mdiv{flex:none;height:92px;min-width:100px;max-width:150px;background:var(--ink);color:#fff;display:flex;flex-direction:column;justify-content:center;padding:6px 24px 6px 12px;cursor:pointer;font-weight:800;font-size:14px;line-height:1.15;clip-path:polygon(0 0,calc(100% - 14px) 0,100% 50%,calc(100% - 14px) 100%,0 100%)}
+.mdiv small{display:block;color:var(--amber);font-family:var(--display);font-weight:400;letter-spacing:1px;text-transform:uppercase;font-size:12px;margin-bottom:3px}
+.mdiv span{overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.mdiv.on{background:var(--amber);color:var(--ink)}.mdiv.on small{color:var(--ink)}
+.chips .none.sm{font-size:14px;padding:0 6px 0 0}
+
+.side{grid-row:1/3;grid-column:2;background:#fff;display:flex;flex-direction:column;min-height:0}
+.panel-h{background:var(--ink);color:var(--amber);font-family:var(--display);letter-spacing:2px;text-transform:uppercase;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;font-size:19px;flex:none}
+.panel-h small{font-family:var(--body);font-weight:600;letter-spacing:.4px;color:#cfcfcf;text-transform:none;font-size:13px}
+.tray-tools{display:flex;gap:8px;padding:10px 12px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--line);flex:none}
+.tray-tools label{font-size:13px;font-weight:700;display:flex;gap:6px;align-items:center;margin-left:auto;cursor:pointer}
+.tray{flex:1;min-height:110px;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:10px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;align-content:start;position:relative}
+.tray.over{outline:4px dashed var(--amber);outline-offset:-6px;background:rgba(252,179,22,.12)}
+.th{position:relative;aspect-ratio:4/3;background:#ddd center/cover;cursor:pointer;border:3px solid transparent;outline:1px solid var(--line)}
+.th:hover{border-color:#ffd77a}
+.th.sel{border-color:var(--amber);outline:2px solid var(--ink)}
+.th i{position:absolute;right:0;top:0;background:var(--amber);color:var(--ink);font-style:normal;font-weight:800;min-width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.th.placed{opacity:.72}.th.placed.sel{opacity:1}
+.tray .drop{grid-column:1/-1;text-align:center;color:var(--mute);padding:36px 14px;border:3px dashed #d4d1c4;font-size:17px}
+.detail{flex:none;border-top:4px solid var(--amber);padding:12px;display:flex;flex-direction:column;gap:9px;background:#faf9f5}
+.detail .pv{height:clamp(200px,36vh,420px);background:#222 center/contain no-repeat;cursor:zoom-in}
+.detail input[type=text]{width:100%;padding:10px;border:2px solid var(--line);background:#fff;font-size:16px}
+.detail input[type=text]:focus{outline:none;border-color:var(--amber)}
+.detail .row{display:flex;gap:8px;flex-wrap:wrap}
+.detail .nm{font-size:13px;color:var(--mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb{position:fixed;inset:0;z-index:200;background:rgba(10,10,10,.95);display:flex;align-items:center;justify-content:center;cursor:zoom-out}
+.lb img{max-width:96vw;max-height:96vh;object-fit:contain}
+
+/* iPad portrait / narrow screens: stack map on top, photo panel below */
+@media (max-width:1000px){
+  .top{padding-left:136px;gap:10px}
+  #editor{grid-template-columns:1fr;grid-template-rows:minmax(0,1.2fr) 96px minmax(0,1fr)}
+  .stage{border-right:0}
+  .strip{grid-row:2}
+  .strip .lab{width:84px;font-size:14px}
+  .chip{width:96px;height:76px}
+  .mdiv{height:76px}
+  .side{grid-row:3;grid-column:1}
+  .detail .pv{height:clamp(110px,18vh,240px)}
+  .tray{grid-template-columns:repeat(5,1fr)}
+  .grid{padding-left:5vw;padding-right:5vw}.hero,.sec,.mlist{padding-left:5vw;padding-right:5vw}
+}
+
+/* map markers */
+.mk{cursor:pointer}
+.mk .fov{fill:rgba(252,179,22,.22);stroke:#FCB316;stroke-width:2;stroke-linejoin:round;pointer-events:none}
+.mk.act .fov,.mk.sel .fov{fill:rgba(252,179,22,.34)}
+.mk .badge{fill:#1a1a1a;stroke:#FCB316;stroke-width:2.5}
+.mk text{fill:#FCB316;font:800 13px "League Spartan",Arial,sans-serif;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.mk .handle{display:none;fill:#fff;stroke:#1a1a1a;stroke-width:3;cursor:grab}
+.mk.sel .handle{display:block}
+.mk .ring{fill:none;stroke:#FCB316;stroke-width:3;display:none;pointer-events:none}
+.mk.act .ring,.mk.sel .ring{display:block;animation:pulse 1.7s ease-out infinite}
+.mk.dim{opacity:.45;transition:opacity .4s}.mk.dim .fov{display:none}
+@keyframes pulse{from{r:13;opacity:.95}to{r:34;opacity:0}}
+
+/* ---------- presentation ---------- */
+#show{position:fixed;inset:0;z-index:100;background:var(--ink);color:#fff;display:flex;flex-direction:column;user-select:none;-webkit-user-select:none;overscroll-behavior:none;touch-action:none}
+#show .s-head{position:relative;flex:none;height:clamp(54px,8vh,78px);background:var(--amber);color:var(--ink);display:flex;align-items:center;gap:22px;padding:0 28px 0 calc(clamp(88px,11vh,116px) + 40px);z-index:3}
+#show .s-head::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(120deg,rgba(255,255,255,.22) 0 16px,transparent 16px 46px);-webkit-mask-image:linear-gradient(90deg,transparent 45%,#000);mask-image:linear-gradient(90deg,transparent 45%,#000)}
+#show .s-head>*{position:relative}
+#show .s-logo{position:absolute;left:28px;top:0;height:calc(100% + 18px);aspect-ratio:1/.95;background:#fff;border-radius:0 0 10px 10px;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 12px rgba(0,0,0,.3)}
+#show .s-logo img{width:78%}
+#show .s-logo b{display:none;color:var(--ink);font-weight:900;font-size:28px}
+#show .s-logo.fb img{display:none}#show .s-logo.fb b{display:block}
+#show .s-title{font-family:var(--display);font-size:clamp(20px,3vh,32px);letter-spacing:3px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#show .s-date{font-weight:700;font-size:clamp(14px,2vh,19px);opacity:.75;white-space:nowrap}
+#show .s-head .grow{flex:1}
+#show .s-job{font-weight:800;font-size:clamp(13px,1.9vh,18px);letter-spacing:1px;text-transform:uppercase;white-space:nowrap}
+#show .s-main{flex:1;min-height:0;display:grid;grid-template-columns:38fr 62fr;transition:grid-template-columns .5s cubic-bezier(.4,0,.2,1)}
+#show .s-main.overview{grid-template-columns:66fr 34fr}
+#show .s-main.photo{grid-template-columns:0fr 1fr}
+#show .s-main.map{grid-template-columns:1fr 0fr}
+#show .s-map{position:relative;min-width:0;min-height:0;overflow:hidden;background:#cfcdc4}
+#show .s-map svg{position:absolute;inset:0;width:100%;height:100%}
+#show .s-map .mapimg{transform-origin:0 0}
+#show.anim .mapimg,#show.anim .mk,#show.anim .sc,#show.anim .rot{transition:transform .75s cubic-bezier(.4,0,.2,1)}
+#show.noanim .mapimg,#show.noanim .mk,#show.noanim .sc,#show.noanim .rot{transition:none!important}
+#show .s-side{position:relative;min-width:0;min-height:0;overflow:hidden;background:#0e0e0e;display:flex;align-items:center;justify-content:center}
+#show .s-side img.ph{max-width:100%;max-height:100%;object-fit:contain;display:block;animation:fadein .35s ease}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+#show .s-side .ph-wrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+#show .legend{position:absolute;inset:0;overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;padding:clamp(14px,3vh,32px) clamp(16px,2.4vw,40px);background:var(--ink)}
+#show .legend h4{margin:0 0 14px;font-family:var(--display);font-weight:400;color:var(--amber);letter-spacing:3px;text-transform:uppercase;font-size:clamp(20px,3.2vh,34px)}
+#show .legend ol{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+#show .legend li{display:flex;gap:14px;align-items:center;background:var(--ink-2);padding:8px 14px 8px 8px;cursor:pointer;font-size:clamp(15px,2.3vh,22px);font-weight:600}
+#show .legend li:hover{background:#3a3a3a}
+#show .legend li span.n{flex:none;background:var(--amber);color:var(--ink);font-weight:900;min-width:2.1em;height:2.1em;display:flex;align-items:center;justify-content:center}
+#show .legend li img{height:2.6em;width:3.6em;object-fit:cover;flex:none}
+#show .legend li em{font-style:normal;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#show .legend .none{color:#aaa;font-size:20px}
+#show .s-foot{flex:none;display:flex;align-items:center;gap:20px;min-height:clamp(50px,8.5vh,84px);background:#111;border-top:4px solid var(--amber);padding:0 24px;padding-bottom:env(safe-area-inset-bottom)}
+#show .s-cap{flex:1;min-width:0;font-size:clamp(18px,3.2vh,34px);font-weight:700;letter-spacing:.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#show .s-cap small{color:var(--amber);font-family:var(--display);font-weight:400;letter-spacing:2px;text-transform:uppercase;margin-right:14px;font-size:.85em}
+#show .segs{flex:none;display:flex;gap:4px;align-items:center;max-width:42vw;min-width:0}
+#show .seg{flex:0 1 clamp(10px,1.6vw,26px);min-width:3px;height:14px;background:#444;border:0;padding:0;cursor:pointer;clip-path:polygon(5px 0,100% 0,calc(100% - 5px) 100%,0 100%)}
+#show .seg.gap{margin-left:8px}
+#show .seg:hover{background:#777}
+#show .seg.on{background:var(--amber)}
+#show .seg.done{background:#8a6a14}
+#show .nav,#show .tools{display:flex;gap:6px}
+#show .nav button,#show .tools button{background:#2c2c2c;color:#fff;border:0;width:52px;height:44px;font-size:18px;cursor:pointer}
+#show .nav button:hover,#show .tools button:hover{background:var(--amber);color:var(--ink)}
+#show .tools button{width:auto;padding:0 14px;font-size:13px;font-weight:700;letter-spacing:.4px;text-transform:uppercase}
+#show .tools button.on{background:var(--amber);color:var(--ink)}
+@media (max-width:900px){
+  #show .s-head{gap:12px;padding-right:14px}
+  #show .s-date{display:none}
+  #show .tag{padding:4px 16px;font-size:12px}
+  #show .s-title{min-width:0;flex:1 1 auto;letter-spacing:2px}
+  #show .s-foot{gap:10px;padding:0 12px}
+  #show .tools button{padding:0 10px}
+}
+@media (orientation:portrait){
+  #show .s-main,#show .s-main.overview{grid-template-columns:1fr;grid-template-rows:44fr 56fr}
+  #show .s-main.photo{grid-template-rows:0fr 1fr}
+  #show .s-main.map{grid-template-rows:1fr 0fr}
+  #show .segs{display:none}
+}
+
+dialog{border:0;padding:0;box-shadow:0 20px 60px rgba(0,0,0,.4);width:min(440px,92vw)}
+dialog::backdrop{background:rgba(26,26,26,.6)}
+dialog form{display:flex;flex-direction:column}
+dialog .body{padding:18px;display:flex;flex-direction:column;gap:12px}
+dialog label{display:flex;flex-direction:column;gap:4px;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:.5px}
+dialog input,dialog select{padding:10px;border:2px solid var(--line);font-size:17px;font-weight:500;text-transform:none;letter-spacing:0;background:#fff}
+dialog input:focus,dialog select:focus{outline:none;border-color:var(--amber)}
+dialog .act{display:flex;gap:10px;justify-content:flex-end;padding:0 18px 18px}
+dialog .copybox{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:14px}
+dialog .q{font-weight:800;font-size:15px;text-transform:uppercase;letter-spacing:.5px}
+dialog .opts{display:flex;gap:8px;flex-wrap:wrap}
+dialog label.opt{flex:1 1 150px;flex-direction:row;align-items:center;gap:10px;border:2px solid var(--line);padding:12px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:16px}
+dialog label.opt:has(input:checked){border-color:var(--amber);background:#fff8e6}
+dialog label.opt input{width:20px;height:20px;padding:0;margin:0;accent-color:var(--ink)}
+dialog .note{margin:0;color:var(--mute);font-size:14px;line-height:1.35}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--ink);color:#fff;border-left:6px solid var(--amber);padding:12px 20px;z-index:300;font-size:16px;max-width:90vw}
+</style>
+</head>
+<body>
+
+<header class="top" id="top">
+  <div class="logo" id="logo" title="Home"><img src="https://twolfx.com/wp-content/themes/twx2025/img/logo.svg" alt="TWX" onerror="this.parentNode.classList.add('fb')"><b>TWX</b></div>
+  <h1 id="topTitle">Site Photo Map</h1>
+  <input class="pname hide" id="pname" spellcheck="false" maxlength="60"><select class="pmeet hide" id="pmeet" title="Meeting date this job belongs to"></select>
+  <div class="grow"></div>
+  <button class="btn ghost hide" id="bExport">Export Slideshow</button>
+  <button class="btn dark hide" id="bPresent">&#9654; Present</button>
+</header>
+
+<main id="home"><div id="boot" style="padding:40px;font-size:20px">Loading…</div></main>
+<main id="editor" class="hide"></main>
+
+<dialog id="dlgPM"><form method="dialog" id="fPM"><div class="panel-h">New Project Manager</div><div class="body"><label>Name<input id="pmName" required maxlength="40" placeholder="e.g. Jordan Smith"></label></div><div class="act"><button class="btn ghost" value="cancel" formnovalidate>Cancel</button><button class="btn dark" value="ok">Create</button></div></form></dialog>
+<dialog id="dlgMtg"><form method="dialog" id="fMtg"><div class="panel-h">New Meeting Date</div><div class="body"><label>Meeting date<input id="mtDate" type="date" required></label>
+  <div class="copybox" id="mtCopyBox">
+    <div class="q">Copy a previous meeting?</div>
+    <div class="opts"><label class="opt"><input type="radio" name="mtCopy" id="mtCopyYes" value="yes" checked>Yes, copy one</label><label class="opt"><input type="radio" name="mtCopy" id="mtCopyNo" value="no">No, start blank</label></div>
+    <label id="mtFromWrap">Copy from<select id="mtFrom"></select></label>
+    <p class="note" id="mtNote">Copies every job in the same order, with its site maps. Photos and markers are not copied, so each job is ready for new pictures. The old meeting is not changed.</p>
+  </div></div><div class="act"><button class="btn ghost" value="cancel" formnovalidate>Cancel</button><button class="btn dark" value="ok">Create</button></div></form></dialog>
+<dialog id="dlgNew">
+  <form method="dialog" id="fNew">
+    <div class="panel-h">New Job</div>
+    <div class="body">
+      <label>Job name<input id="nName" required maxlength="60" placeholder="e.g. Timber Ridge Industrial"></label>
+      <label>Meeting date<select id="nMeet" required></select></label>
+    </div>
+    <div class="act"><button class="btn ghost" value="cancel" formnovalidate>Cancel</button><button class="btn dark" value="ok">Create</button></div>
+  </form>
+</dialog>
+
+<input type="file" id="fileMap" accept="image/*" class="hide">
+<input type="file" id="filePhotos" accept="image/*,.heic,.heif" multiple class="hide">
+<input type="file" id="fileFolder" webkitdirectory multiple class="hide">
+
+<script>
+function msg(t){const b=document.getElementById('boot')||document.body.appendChild(document.createElement('div'));b.id='boot';b.style.cssText='padding:40px;font:600 20px/1.4 sans-serif;color:#1a1a1a;background:#fff3cd;border-left:8px solid #FCB316;margin:30px;position:relative;z-index:50';b.textContent=t}
+window.addEventListener('error',e=>{if(document.getElementById('boot'))msg('Something went wrong loading the app: '+e.message)});
+const SOURCE='<!doctype html>\n'+document.documentElement.outerHTML;
+let EMBED=null;/*@@EMBED@@*/
+'use strict';
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+const IS_IOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const LOGO_HTML='<img src="https://twolfx.com/wp-content/themes/twx2025/img/logo.svg" alt="TWX" onerror="this.parentNode.classList.add(\'fb\')"><b>TWX</b>';
+function toast(msg,ms=3200){const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),ms)}
+const fmtDate=d=>{if(!d)return'';const [y,m,dd]=d.split('-').map(Number);return new Date(y,m-1,dd).toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'})};
+const isImg=f=>/^image\//.test(f.type)||/\.(jpe?g|png|gif|webp|bmp|avif|hei[cf])$/i.test(f.name)||(!f.type&&!/\.[a-z0-9]{1,6}$/i.test(f.name));
+// stop Safari (iPad/iPhone) from pinch-zooming or bouncing the whole page
+['gesturestart','gesturechange','gestureend'].forEach(t=>document.addEventListener(t,e=>e.preventDefault()));
+
+/* ================= storage (IndexedDB) ================= */
+const DB={
+  db:null,
+  open(){return new Promise((res,rej)=>{const r=indexedDB.open('twx-photomap',3);
+    r.onupgradeneeded=()=>{const d=r.result;
+      if(!d.objectStoreNames.contains('projects')){d.createObjectStore('projects',{keyPath:'id'});d.createObjectStore('blobs',{keyPath:'id'}).createIndex('pid','pid')}
+      if(!d.objectStoreNames.contains('pms'))d.createObjectStore('pms',{keyPath:'id'});
+      if(!d.objectStoreNames.contains('meetings'))d.createObjectStore('meetings',{keyPath:'id'})};
+    r.onsuccess=()=>{this.db=r.result;this.db.onversionchange=()=>{this.db.close();location.reload()};res()};
+    r.onerror=()=>rej(r.error);
+    r.onblocked=()=>msg('This app is open in another tab or window using an older version. Close those tabs, then reload this page.')})},
+  tx(store,mode,fn){return new Promise((res,rej)=>{const t=this.db.transaction(store,mode);const rq=fn(t.objectStore(store));t.oncomplete=()=>res(rq&&rq.result);t.onerror=()=>rej(t.error);t.onabort=()=>rej(t.error)})},
+  get(s,k){return this.tx(s,'readonly',o=>o.get(k))},
+  put(s,v){return this.tx(s,'readwrite',o=>o.put(v))},
+  del(s,k){return this.tx(s,'readwrite',o=>o.delete(k))},
+  all(s){return this.tx(s,'readonly',o=>o.getAll())},
+  byPid(pid){return this.tx('blobs','readonly',o=>o.index('pid').getAll(pid))}
+};
+
+const isHeic=f=>/hei[cf]/i.test(f.type)||/\.hei[cf]$/i.test(f.name);
+let heicLib=null;
+function loadHeic(){
+  if(window.heic2any)return Promise.resolve();
+  if(heicLib)return heicLib;
+  const urls=['https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js','https://cdnjs.cloudflare.com/ajax/libs/heic2any/0.0.4/heic2any.min.js'];
+  heicLib=(async()=>{for(const u of urls){try{await new Promise((res,rej)=>{const s=document.createElement('script');s.src=u;s.onload=res;s.onerror=rej;document.head.appendChild(s)});if(window.heic2any)return}catch(e){}}heicLib=null;throw new Error('heic lib')})();
+  return heicLib;
+}
+async function decode(file){
+  try{return await createImageBitmap(file,{imageOrientation:'from-image'})}
+  catch(e){
+    if(!isHeic(file))throw e;
+    await loadHeic();
+    let out=await window.heic2any({blob:file,toType:'image/jpeg',quality:.95});
+    if(Array.isArray(out))out=out[0];
+    return await createImageBitmap(out);
+  }
+}
+// high-quality resize: halve repeatedly so big phone photos don't get grainy/aliased
+function resized(src,tw,th){
+  let cur=src,cw=src.width,ch=src.height;
+  while(cw/2>=tw&&ch/2>=th){
+    const c=document.createElement('canvas');c.width=cw=Math.round(cw/2);c.height=ch=Math.round(ch/2);
+    const x=c.getContext('2d');x.imageSmoothingQuality='high';x.drawImage(cur,0,0,cw,ch);cur=c;
+  }
+  const c=document.createElement('canvas');c.width=tw;c.height=th;
+  const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,tw,th);x.imageSmoothingQuality='high';x.drawImage(cur,0,0,tw,th);
+  return c;
+}
+async function processImage(file,max,q,thumbMax=640){
+  const bmp=await decode(file);
+  const mk=async(m,qq)=>{const s=Math.min(1,m/Math.max(bmp.width,bmp.height));const w=Math.round(bmp.width*s),h=Math.round(bmp.height*s);
+    const c=resized(bmp,w,h);
+    return {blob:await new Promise(r=>c.toBlob(r,'image/jpeg',qq)),w,h}};
+  const main=await mk(max,q),th=await mk(thumbMax,.88);
+  if(bmp.close)bmp.close();
+  return {blob:main.blob,w:main.w,h:main.h,thumb:th.blob};
+}
+const blobToDataURL=b=>new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result);f.readAsDataURL(b)});
+
+/* ================= map scene (shared by editor + presentation) ================= */
+const NS='http://www.w3.org/2000/svg';
+const MK_HTML=`<g class="sc"><g class="rot"><path class="fov" d="M0 0 L-42 -78 A88 88 0 0 1 42 -78 Z"/><circle class="handle" cx="0" cy="-88" r="10"/></g><circle class="ring" r="13"/><circle class="badge" r="11"/><text>1</text></g>`;
+class Scene{
+  constructor(svg){this.svg=svg;svg.innerHTML='<image class="mapimg" x="0" y="0"></image><g class="layer"></g>';this.img=svg.firstChild;this.layer=svg.lastChild;this.els=new Map();this.map=null}
+  setMap(m){this.map=m;this.layer.innerHTML='';this.els.clear();this.img.setAttribute('href',m.src);this.img.setAttribute('width',m.w);this.img.setAttribute('height',m.h)}
+  fit(pad=.96){const w=this.svg.clientWidth||1,h=this.svg.clientHeight||1,m=this.map;const k=Math.min(w/m.w,h/m.h)*pad;return{k,x:(w-m.w*k)/2,y:(h-m.h*k)/2}}
+  draw(S){
+    const m=this.map,v=S.view;
+    this.img.style.transform=`translate(${v.x}px,${v.y}px) scale(${v.k})`;
+    const seen=new Set();
+    S.pins.forEach((p,i)=>{
+      seen.add(p.id);let el=this.els.get(p.id);
+      if(!el){el=document.createElementNS(NS,'g');el.setAttribute('class','mk');el.innerHTML=MK_HTML;el._sc=el.querySelector('.sc');el._rot=el.querySelector('.rot');el._tx=el.querySelector('text');this.els.set(p.id,el);this.layer.appendChild(el)}
+      const act=S.activeId===p.id,sel=!!S.edit&&S.sel===p.id;
+      el.style.transform=`translate(${v.x+p.x*m.w*v.k}px,${v.y+p.y*m.h*v.k}px)`;
+      el._sc.style.transform=`scale(${S.size*(S.mult||1)*(sel?1.12:1)})`;
+      el._rot.style.transform=`rotate(${p.a}deg)`;
+      el._tx.textContent=p.n||((S.base||0)+i+1);el.dataset.id=p.id;
+      el.classList.toggle('act',act);el.classList.toggle('dim',!!S.dim&&!act);el.classList.toggle('sel',sel);
+    });
+    for(const [id,el] of this.els)if(!seen.has(id)){el.remove();this.els.delete(id)}
+    if(S.edit&&S.sel&&this.els.has(S.sel)){const el=this.els.get(S.sel);if(el!==this.layer.lastChild)this.layer.appendChild(el)}
+  }
+}
+
+/* ================= app state ================= */
+let P=null;                 // current project
+let photos={};              // id -> {id,name,blob,thumb,w,h,src,tsrc}
+let mapObj=null;            // site map on screen {src,tsrc,w,h}
+let mapObjs={};             // every site map of the job: id -> {src,tsrc,w,h}
+let curMap=null;            // id of the site map on screen
+let views={};               // remembered pan/zoom for each site map
+let mapMode='add';          // the map file picker either adds a new map or replaces the one on screen
+let sel=null;               // selected photo id
+let scene=null, view={x:0,y:0,k:1};
+let saveT=null;
+
+let saveP=null;
+function flushSave(){clearTimeout(saveT);const p=saveP;saveP=null;if(p)DB.put('projects',p).catch(()=>toast('Could not save — browser storage is unavailable'))}
+function save(){saveP=P;clearTimeout(saveT);saveT=setTimeout(flushSave,250)}
+// never lose the last edit when leaving a job or closing the tab
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')flushSave()});
+window.addEventListener('pagehide',flushSave);
+const pinOf=id=>P.pins.find(p=>p.id===id);
+const nextUnplaced=(after)=>{const ids=P.photoIds;let i=after?ids.indexOf(after):-1;for(let n=1;n<=ids.length;n++){const id=ids[(i+n)%ids.length];if(id&&!pinOf(id))return id}return null};
+/* A job can have several site maps (p.maps, in slideshow order) and each marker remembers its map (pin.m).
+   Older jobs only have p.mapId, so turn that into a one-map list. */
+function normProject(p){
+  if(!Array.isArray(p.maps))p.maps=p.mapId?[{id:p.mapId,name:'Site map',w:p.mapW||0,h:p.mapH||0}]:[];
+  const ids=new Set(p.maps.map(m=>m.id)),first=p.maps[0]&&p.maps[0].id;
+  for(const x of p.pins||[])if(!ids.has(x.m))x.m=first;
+  return p;
+}
+// the old single-map fields keep pointing at the first map (used for thumbnails)
+function syncLegacy(p){const f=p.maps[0];p.mapId=f?f.id:null;p.mapW=f?f.w:0;p.mapH=f?f.h:0}
+// the slideshow runs map by map, so markers stay grouped in map order
+function sortPins(){const ix={};P.maps.forEach((m,i)=>ix[m.id]=i);P.pins.sort((a,b)=>(ix[a.m]??0)-(ix[b.m]??0))}
+const mapPins=id=>P.pins.filter(p=>p.m===id);
+const todayISO=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+
+/* ================= HOME (PMs) → PM (meeting dates) → meeting (jobs) ================= */
+let curPM=null,curMeeting=null,origin=null,curPMName='';
+const shortDate=d=>{if(!d)return'';const [y,m,dd]=d.split('-').map(Number);return new Date(y,m-1,dd).toLocaleDateString(undefined,{month:'short',day:'numeric'}).toUpperCase()};
+const numDate=d=>{if(!d)return'No date';const [y,m,dd]=d.split('-').map(Number);return`${m}.${dd}.${String(y).slice(2)}`};
+function chrome(mode,title){
+  flushSave();
+  $('#editor').classList.toggle('hide',mode!=='editor');$('#home').classList.toggle('hide',mode==='editor');
+  ['#pname','#pmeet'].forEach(s=>$(s).classList.toggle('hide',mode!=='editor'));$('#topTitle').classList.toggle('hide',mode==='editor');
+  $('#bExport').classList.toggle('hide',mode!=='editor');$('#bPresent').classList.toggle('hide',mode!=='editor');
+  if(title)$('#topTitle').textContent=title;
+}
+/* the job's meetingId is the truth; the meeting's jobIds only remembers the order */
+function orderedJobIds(m,projs){
+  const mine=projs.filter(p=>p.meetingId===m.id),ids=m.jobIds.filter(id=>mine.some(p=>p.id===id));
+  for(const p of mine)if(!ids.includes(p.id))ids.push(p.id);
+  return ids;
+}
+async function migrate(){
+  const ps=await DB.all('projects');
+  const orphans=ps.filter(p=>!p.pmId);
+  if(orphans.length){
+    let pm=(await DB.all('pms')).find(m=>m.name==='Unassigned');
+    if(!pm){pm={id:uid(),name:'Unassigned',created:Date.now()};await DB.put('pms',pm)}
+    for(const p of orphans){p.pmId=pm.id;await DB.put('projects',p)}
+  }
+  // earlier version: meetings could mix PMs. Split them into one meeting date per PM.
+  const legacy=(await DB.all('meetings')).filter(m=>!m.pmId);
+  if(legacy.length){
+    const byId=Object.fromEntries((await DB.all('projects')).map(p=>[p.id,p]));
+    for(const m of legacy){
+      const groups={};
+      for(const jid of m.jobIds){const p=byId[jid];if(p)(groups[p.pmId]=groups[p.pmId]||[]).push(jid)}
+      for(const [pmId,ids] of Object.entries(groups)){
+        const nm={id:uid(),pmId,date:m.date||'',jobIds:[],created:m.created||Date.now(),updated:Date.now()};
+        for(const jid of ids){const p=byId[jid];if(!p.meetingId){p.meetingId=nm.id;if(m.date)p.date=m.date;nm.jobIds.push(jid);await DB.put('projects',p)}}
+        await DB.put('meetings',nm);
+      }
+      await DB.del('meetings',m.id);
+    }
+  }
+}
+const pmInitials=n=>n.split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();
+
+async function showHome(){
+  P=null;sel=null;curPM=null;curMeeting=null;origin=null;chrome('home','Site Photo Map');
+  const pms=(await DB.all('pms')).sort((a,b)=>a.name.localeCompare(b.name));
+  const projs=await DB.all('projects'),mtgs=await DB.all('meetings');
+  const cards=pms.map(m=>{const mine=projs.filter(p=>p.pmId===m.id);const dates=mtgs.filter(x=>x.pmId===m.id).length;const n=mine.reduce((s,p)=>s+p.photoIds.length,0);
+    return`<div class="card pm" data-pm="${m.id}"><div class="thumb ini">${esc(pmInitials(m.name))}</div><div class="meta"><h3>${esc(m.name)}</h3><div class="sub">${dates} meeting date${dates===1?'':'s'} · ${mine.length} job${mine.length===1?'':'s'} · ${n} photos</div></div><button class="x" style="right:50px" title="Rename" data-ren="${m.id}">&#9998;</button><button class="x" title="Delete PM" data-delpm="${m.id}">&times;</button></div>`}).join('');
+  const dates={};for(const m of mtgs){const n=orderedJobIds(m,projs).length;(dates[m.date||'']=dates[m.date||'']||{jobs:0,pms:new Set()});dates[m.date||''].jobs+=n;if(n)dates[m.date||''].pms.add(m.pmId)}
+  const dcards=Object.keys(dates).sort().reverse().map(d=>{const x=dates[d];
+    return`<div class="card pm" data-date="${esc(d)}" title="Present every PM's jobs for this date"><div class="thumb ini">${esc(shortDate(d)||'—')}</div><div class="meta"><h3>${esc(numDate(d))}</h3><div class="sub">${x.jobs} job${x.jobs===1?'':'s'} · ${x.pms.size} PM${x.pms.size===1?'':'s'}</div><div style="margin-top:10px"><span class="tag dark">&#9654; Present all</span></div></div></div>`}).join('');
+  $('#home').innerHTML=`<section class="hero"><h2>Site Photo Map</h2><p>Open a project manager to set up their meeting dates and jobs. Present one PM's meeting from their page, or everyone's jobs for a date from here.</p></section>
+  <h2 class="sec">Project managers</h2><div class="grid tight">${cards}<div class="card new" id="cNewPM"><span class="plus">+</span>New project manager</div></div>
+  ${dcards?`<h2 class="sec">Meetings by date <small>all PMs</small></h2><div class="grid tight">${dcards}</div>`:''}`;
+}
+async function showPM(id){
+  P=null;sel=null;curMeeting=null;curPM=await DB.get('pms',id);if(!curPM)return showHome();
+  chrome('home',curPM.name);
+  const projs=(await DB.all('projects')).filter(p=>p.pmId===id),mtgs=(await DB.all('meetings')).filter(m=>m.pmId===id).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const mcards=mtgs.map(m=>{const n=orderedJobIds(m,projs).length;
+    return`<div class="card pm" data-mtg="${m.id}"><div class="thumb ini">${esc(shortDate(m.date)||'—')}</div><div class="meta"><h3>${esc(numDate(m.date))}</h3><div class="sub">${n} job${n===1?'':'s'}</div><div style="margin-top:10px"><span class="tag dark" data-pres="${m.id}">&#9654; Present</span></div></div><button class="x" title="Delete this meeting date and its jobs" data-delmtg="${m.id}">&times;</button></div>`}).join('');
+  const loose=projs.filter(p=>!mtgs.some(m=>m.id===p.meetingId)).sort((a,b)=>b.updated-a.updated);
+  const lcards=[];
+  for(const p of loose){
+    let thumb='';if(p.mapId){const b=await DB.get('blobs',p.mapId);if(b)thumb=URL.createObjectURL(b.thumb)}
+    lcards.push(`<div class="card" data-id="${p.id}"><div class="thumb" style="${thumb?`background-image:url(${thumb})`:''}">${thumb?'':'No site map yet'}</div><div class="meta"><h3>${esc(p.name)}</h3><div class="sub">No meeting date — open it and pick one</div></div><button class="x" title="Delete job" data-del="${p.id}">&times;</button></div>`);
+  }
+  $('#home').innerHTML=`<section class="hero"><h2>${esc(curPM.name)}</h2><p><a href="#" id="bkHome" style="color:var(--amber);font-weight:700">&larr; All project managers</a> &nbsp;·&nbsp; ${mtgs.length} meeting date${mtgs.length===1?'':'s'}</p>
+    <div class="mbtns"><button class="btn amber" id="cNewMtg">+ New meeting date</button><button class="btn" id="cNew">+ New job</button></div></section>
+  <h2 class="sec">Meeting dates</h2><div class="grid tight">${mcards||'<div class="mempty" style="grid-column:1/-1">No meeting dates yet. Click <b>+ New meeting date</b> (for example 10.6.26), then add jobs to it.</div>'}</div>
+  ${lcards.length?`<h2 class="sec">Jobs without a meeting date</h2><div class="grid tight">${lcards.join('')}</div>`:''}`;
+}
+async function showMeeting(id){
+  P=null;sel=null;curMeeting=await DB.get('meetings',id);if(!curMeeting)return showHome();
+  curPM=await DB.get('pms',curMeeting.pmId);chrome('home',curPM?curPM.name:'Meeting');
+  const projs=(await DB.all('projects')).filter(p=>p.pmId===curMeeting.pmId),byId=Object.fromEntries(projs.map(p=>[p.id,p]));
+  curMeeting.jobIds=orderedJobIds(curMeeting,projs);
+  const rows=[];
+  for(const [k,jid] of curMeeting.jobIds.entries()){
+    const p=normProject(byId[jid]),nm=p.maps.length;let thumb='';
+    if(nm){const b=await DB.get('blobs',p.maps[0].id);if(b)thumb=URL.createObjectURL(b.thumb)}
+    rows.push(`<div class="mrow" draggable="true" data-i="${k}" data-id="${jid}"><span class="grip" title="Drag to reorder">&#8942;&#8942;</span><b class="no">${k+1}</b><div class="mth" style="${thumb?`background-image:url(${thumb})`:''}"></div><div class="mi"><h3>${esc(p.name)}</h3><div class="sub">${nm?`${p.pins.length} photo${p.pins.length===1?'':'s'} on ${nm>1?`${nm} site maps`:'the map'}`:'<b style="color:#b45309">No site map yet — will be skipped</b>'}</div></div><div class="ma"><button data-up title="Move up">&#9650;</button><button data-dn title="Move down">&#9660;</button><button data-open title="Open job">Open</button><button data-rmj title="Delete job">&times;</button></div></div>`);
+  }
+  $('#home').innerHTML=`<section class="hero"><p><a href="#" id="bkPM" style="color:var(--amber);font-weight:700">&larr; ${esc(curPM?curPM.name:'Back')}</a></p>
+    <h2>Meeting ${esc(numDate(curMeeting.date))}</h2><div class="mdate"><input type="date" id="mDate" value="${esc(curMeeting.date||'')}"> <span>${curMeeting.jobIds.length} job${curMeeting.jobIds.length===1?'':'s'}</span></div>
+    <div class="mbtns"><button class="btn amber" id="mPresent">&#9654; Present meeting</button><button class="btn" id="cNew">+ New job</button><button class="btn ghost" id="mExport">Export slideshow</button></div></section>
+    <div class="mlist">${rows.join('')||'<div class="mempty">No jobs yet. Click <b>+ New job</b> to add the first one.</div>'}</div>`;
+}
+async function saveMtg(){curMeeting.updated=Date.now();await DB.put('meetings',curMeeting)}
+async function jobsData(ids){const Ds=[];for(const id of ids){const D=await showDataFor(id);if(D)Ds.push(D)}return Ds}
+async function idsForMeeting(m){return orderedJobIds(m,await DB.all('projects'))}
+async function idsForDate(date){
+  const projs=await DB.all('projects'),pms=Object.fromEntries((await DB.all('pms')).map(m=>[m.id,m.name]));
+  const ms=(await DB.all('meetings')).filter(m=>(m.date||'')===date).sort((a,b)=>(pms[a.pmId]||'').localeCompare(pms[b.pmId]||''));
+  return ms.flatMap(m=>orderedJobIds(m,projs));
+}
+async function presentIds(ids,date){
+  toast('Loading meeting…',60000);const Ds=await jobsData(ids);document.querySelectorAll('.toast').forEach(x=>x.remove());
+  if(!Ds.length)return toast('None of these jobs have a site map yet');
+  startShow(Ds,{date});
+}
+async function deleteProject(id){const bl=await DB.byPid(id);for(const b of bl)await DB.del('blobs',b.id);await DB.del('projects',id)}
+async function deleteMeeting(m){const projs=(await DB.all('projects')).filter(p=>p.meetingId===m.id);for(const p of projs)await deleteProject(p.id);await DB.del('meetings',m.id)}
+/* new meeting from a previous one: same jobs in the same order, each with its own copy of the site maps, no photos */
+async function copyJobs(src,dst){
+  const projs=await DB.all('projects'),byId=Object.fromEntries(projs.map(p=>[p.id,p]));
+  for(const jid of orderedJobIds(src,projs)){
+    const s=normProject(byId[jid]),now=Date.now();
+    const np={id:uid(),pmId:dst.pmId,meetingId:dst.id,name:s.name,date:dst.date,maps:[],photoIds:[],pins:[],size:s.size||1,created:now,updated:now};
+    for(const m of s.maps){
+      const b=await DB.get('blobs',m.id);if(!b)continue;
+      const id='map-'+uid();
+      await DB.put('blobs',{id,pid:np.id,kind:'map',name:b.name,blob:b.blob,thumb:b.thumb,w:b.w,h:b.h});
+      np.maps.push({id,name:m.name,w:b.w,h:b.h});
+    }
+    syncLegacy(np);await DB.put('projects',np);dst.jobIds.push(np.id);
+  }
+  dst.updated=Date.now();await DB.put('meetings',dst);
+  return dst.jobIds.length;
+}
+function mtCopyToggle(){const y=$('#mtCopyYes').checked;$('#mtFromWrap').classList.toggle('hide',!y);$('#mtNote').classList.toggle('hide',!y)}
+$('#fMtg').addEventListener('change',e=>{if(e.target.name==='mtCopy')mtCopyToggle()});
+
+$('#home').addEventListener('click',async e=>{
+  const t=e.target;
+  if(t.closest('#bkHome')){e.preventDefault();return showHome()}
+  if(t.closest('#bkPM')){e.preventDefault();return curPM?showPM(curPM.id):showHome()}
+  const del=t.closest('[data-del]');
+  if(del){e.stopPropagation();const p=await DB.get('projects',del.dataset.del);if(confirm(`Delete "${p.name}" and all of its photos? This can't be undone.`)){await deleteProject(p.id);showPM(curPM.id)}return}
+  const dpm=t.closest('[data-delpm]');
+  if(dpm){e.stopPropagation();const m=await DB.get('pms',dpm.dataset.delpm);const n=(await DB.all('projects')).filter(p=>p.pmId===m.id);
+    if(confirm(`Delete ${m.name} and ${n.length} job${n.length===1?'':'s'} with all photos? This can't be undone.`)){for(const p of n)await deleteProject(p.id);for(const x of (await DB.all('meetings')).filter(x=>x.pmId===m.id))await DB.del('meetings',x.id);await DB.del('pms',m.id);showHome()}return}
+  const ren=t.closest('[data-ren]');
+  if(ren){e.stopPropagation();const m=await DB.get('pms',ren.dataset.ren);const nn=prompt('Rename project manager',m.name);if(nn&&nn.trim()){m.name=nn.trim();await DB.put('pms',m);showHome()}return}
+  if(t.closest('#cNewPM')){$('#pmName').value='';$('#dlgPM').showModal();$('#pmName').focus();return}
+  const dm=t.closest('[data-delmtg]');
+  if(dm){e.stopPropagation();const m=await DB.get('meetings',dm.dataset.delmtg);const n=orderedJobIds(m,await DB.all('projects')).length;
+    if(confirm(`Delete meeting ${numDate(m.date)}${n?` and its ${n} job${n===1?'':'s'} with all photos`:''}? This can't be undone.`)){await deleteMeeting(m);showPM(curPM.id)}return}
+  const pres=t.closest('[data-pres]');
+  if(pres){const m=await DB.get('meetings',pres.dataset.pres);return presentIds(await idsForMeeting(m),m.date)}
+  const dc=t.closest('.card[data-date]');if(dc)return presentIds(await idsForDate(dc.dataset.date),dc.dataset.date);
+  if(t.closest('#cNewMtg')){
+    if(!curPM)return;
+    const mtgs=(await DB.all('meetings')).filter(m=>m.pmId===curPM.id).sort((a,b)=>(b.date||'').localeCompare(a.date||'')),projs=await DB.all('projects');
+    $('#mtFrom').innerHTML=mtgs.map(m=>{const n=orderedJobIds(m,projs).length;return`<option value="${m.id}">Meeting ${esc(numDate(m.date))} — ${n} job${n===1?'':'s'}</option>`}).join('');
+    $('#mtCopyBox').classList.toggle('hide',!mtgs.length);$('#mtCopyYes').checked=true;mtCopyToggle();
+    $('#mtDate').value=todayISO();$('#dlgMtg').showModal();return}
+  if(t.closest('#cNew')){
+    if(!curPM)return;
+    const mtgs=(await DB.all('meetings')).filter(m=>m.pmId===curPM.id).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+    if(!mtgs.length)return toast('Create a meeting date first (+ New meeting date), then add jobs to it.',5000);
+    $('#nMeet').innerHTML=mtgs.map(m=>`<option value="${m.id}">${esc(numDate(m.date))} — ${esc(fmtDate(m.date))}</option>`).join('');
+    if(curMeeting)$('#nMeet').value=curMeeting.id;
+    $('#nName').value='';$('#dlgNew').showModal();$('#nName').focus();return}
+  const mc=t.closest('.card[data-mtg]');if(mc)return showMeeting(mc.dataset.mtg);
+  const pm=t.closest('.card[data-pm]');if(pm)return showPM(pm.dataset.pm);
+  const c=t.closest('.card[data-id]');if(c){origin=null;return openProject(c.dataset.id)}
+  if(!curMeeting)return;
+  if(t.closest('#mPresent'))return presentIds(await idsForMeeting(curMeeting),curMeeting.date);
+  if(t.closest('#mExport')){const Ds=await jobsData(await idsForMeeting(curMeeting));if(!Ds.length)return toast('None of these jobs have a site map yet');return exportShow(Ds,(curPM?curPM.name+' ':'')+numDate(curMeeting.date),curMeeting.date)}
+  const row=t.closest('.mrow');if(!row)return;const i=+row.dataset.i,ids=curMeeting.jobIds;
+  if(t.closest('[data-up]')&&i>0){[ids[i-1],ids[i]]=[ids[i],ids[i-1]];await saveMtg();return showMeeting(curMeeting.id)}
+  if(t.closest('[data-dn]')&&i<ids.length-1){[ids[i+1],ids[i]]=[ids[i],ids[i+1]];await saveMtg();return showMeeting(curMeeting.id)}
+  if(t.closest('[data-rmj]')){const p=await DB.get('projects',row.dataset.id);if(confirm(`Delete "${p.name}" and all of its photos? This can't be undone.`)){await deleteProject(p.id);ids.splice(i,1);await saveMtg();showMeeting(curMeeting.id)}return}
+  if(t.closest('[data-open]')){origin={t:'mtg',id:curMeeting.id};return openProject(row.dataset.id)}
+});
+$('#home').addEventListener('input',async e=>{
+  if(curMeeting&&e.target.id==='mDate'&&e.target.value){
+    curMeeting.date=e.target.value;await saveMtg();
+    for(const p of (await DB.all('projects')).filter(p=>p.meetingId===curMeeting.id)){p.date=curMeeting.date;await DB.put('projects',p)}
+    const keep=curMeeting.id;clearTimeout(window._dt);window._dt=setTimeout(()=>showMeeting(keep),700);
+  }
+});
+$('#fPM').addEventListener('submit',async e=>{
+  if(e.submitter&&e.submitter.value!=='ok')return;
+  const name=$('#pmName').value.trim();if(!name)return;
+  const m={id:uid(),name,created:Date.now()};await DB.put('pms',m);showPM(m.id);
+});
+$('#fMtg').addEventListener('submit',async e=>{
+  if(e.submitter&&e.submitter.value!=='ok')return;
+  const date=$('#mtDate').value;if(!date||!curPM)return;
+  const ex=(await DB.all('meetings')).find(m=>m.pmId===curPM.id&&m.date===date);
+  if(ex){toast('That meeting date already exists — opened it');return showMeeting(ex.id)}
+  const m={id:uid(),pmId:curPM.id,date,jobIds:[],created:Date.now(),updated:Date.now()};
+  await DB.put('meetings',m);
+  if(!$('#mtCopyBox').classList.contains('hide')&&$('#mtCopyYes').checked){
+    const src=await DB.get('meetings',$('#mtFrom').value);
+    if(src){
+      toast('Copying jobs and site maps…',60000);
+      try{const n=await copyJobs(src,m);document.querySelectorAll('.toast').forEach(x=>x.remove());toast(`Copied ${n} job${n===1?'':'s'} from meeting ${numDate(src.date)} — ready for new photos`,4500)}
+      catch(err){console.error(err);document.querySelectorAll('.toast').forEach(x=>x.remove());toast('Could not copy every job — browser storage may be full',6000)}
+    }
+  }
+  showMeeting(m.id);
+});
+$('#fNew').addEventListener('submit',async e=>{
+  if(e.submitter&&e.submitter.value!=='ok')return;
+  const m=await DB.get('meetings',$('#nMeet').value);if(!m)return;
+  const p={id:uid(),pmId:m.pmId,meetingId:m.id,name:$('#nName').value.trim()||'Untitled Job',date:m.date,mapId:null,mapW:0,mapH:0,maps:[],photoIds:[],pins:[],size:1,created:Date.now(),updated:Date.now()};
+  await DB.put('projects',p);m.jobIds=orderedJobIds(m,await DB.all('projects'));await DB.put('meetings',m);
+  origin={t:'mtg',id:m.id};openProject(p.id);
+});
+$('#logo').addEventListener('click',()=>{if(EMBED)return;if(P&&origin&&origin.t==='mtg')showMeeting(origin.id);else if(P&&P.pmId)showPM(P.pmId);else showHome()});
+$('#topTitle').addEventListener('click',()=>{if(!P)showHome()});
+
+let dragM=null;
+document.addEventListener('dragstart',e=>{const r=e.target.closest&&e.target.closest('.mrow');if(r){dragM=+r.dataset.i;e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain','m')}});
+document.addEventListener('dragover',e=>{const r=e.target.closest&&e.target.closest('.mrow');if(r&&dragM!==null){e.preventDefault();document.querySelectorAll('.mrow.dragover').forEach(x=>x.classList.remove('dragover'));r.classList.add('dragover')}});
+document.addEventListener('drop',async e=>{
+  const r=e.target.closest&&e.target.closest('.mrow');
+  if(r&&dragM!==null){e.preventDefault();const to=+r.dataset.i,from=dragM;dragM=null;if(to!==from){const [m]=curMeeting.jobIds.splice(from,1);curMeeting.jobIds.splice(to,0,m);await saveMtg();showMeeting(curMeeting.id)}}
+  dragM=null;document.querySelectorAll('.mrow.dragover').forEach(x=>x.classList.remove('dragover'));
+});
+document.addEventListener('dragend',()=>{dragM=null;document.querySelectorAll('.mrow.dragover').forEach(x=>x.classList.remove('dragover'))});
+
+/* job's meeting-date picker in the editor header */
+async function fillMeetingPicker(){
+  const s2=$('#pmeet'),mtgs=(await DB.all('meetings')).filter(m=>m.pmId===P.pmId).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  s2.innerHTML=(mtgs.some(m=>m.id===P.meetingId)?'':'<option value="">Pick a meeting date…</option>')+mtgs.map(m=>`<option value="${m.id}">Meeting ${esc(numDate(m.date))}</option>`).join('');
+  s2.value=P.meetingId||'';
+}
+$('#pmeet').addEventListener('change',async e=>{
+  if(!P||!e.target.value)return;
+  const old=P.meetingId?await DB.get('meetings',P.meetingId):null;
+  if(old){old.jobIds=old.jobIds.filter(j=>j!==P.id);await DB.put('meetings',old)}
+  const nm=await DB.get('meetings',e.target.value);
+  P.meetingId=nm.id;P.date=nm.date;P.updated=Date.now();
+  await DB.put('projects',P);nm.jobIds=orderedJobIds(nm,await DB.all('projects'));await DB.put('meetings',nm);
+  origin={t:'mtg',id:nm.id};toast('Moved to meeting '+numDate(nm.date));
+});
+
+/* ================= EDITOR ================= */
+async function openProject(id){
+  P=normProject(await DB.get('projects',id));
+  {const _pm=await DB.get('pms',P.pmId);curPMName=_pm?_pm.name:''}
+  photos={};mapObjs={};mapObj=null;curMap=null;views={};sel=null;
+  const mids=new Set(P.maps.map(m=>m.id));
+  for(const b of await DB.byPid(id)){
+    if(mids.has(b.id))mapObjs[b.id]={src:URL.createObjectURL(b.blob),tsrc:URL.createObjectURL(b.thumb),w:b.w,h:b.h};
+    else if(b.kind!=='map')photos[b.id]={...b,src:URL.createObjectURL(b.blob),tsrc:URL.createObjectURL(b.thumb)};
+  }
+  P.maps=P.maps.filter(m=>mapObjs[m.id]);
+  P.photoIds=P.photoIds.filter(i=>photos[i]);P.pins=P.pins.filter(p=>photos[p.id]&&mapObjs[p.m]);sortPins();
+  if(P.maps.length){curMap=P.maps[0].id;mapObj=mapObjs[curMap]}
+  sel=nextUnplaced()||(P.pins[0]&&P.pins[0].id)||null;
+  buildEditor();
+}
+function buildEditor(){
+  chrome('editor');$('#pname').value=P.name;fillMeetingPicker();
+  $('#editor').innerHTML=`
+  <div class="stage" id="stage">
+    <svg id="msvg"></svg>
+    <div class="empty" id="empty"><h3>Drop your site map here</h3><p>A drone overhead or a site drawing. JPG or PNG.</p><button class="btn dark" id="bPickMap">Choose image</button></div>
+    <div class="mtop" id="mtop">
+      <div class="mtabs hide" id="mtabs"></div>
+      <div class="mtools" id="mtools">
+        <div class="grp"><button id="zIn" title="Zoom in">+</button><button id="zOut" title="Zoom out">&minus;</button><button id="zFit" title="Fit map" style="font-size:14px;width:48px">FIT</button></div>
+        <label>Marker size <input type="range" id="szr" min="0.5" max="2.5" step="0.1"></label>
+        <button class="btn sm ghost" id="bRepl" title="Swap in a new image for the map on screen. Markers stay put.">Replace map</button>
+        <button class="btn sm dark" id="bAddMap" title="Add another site map, e.g. a building floor plan">+ Add site map</button>
+      </div>
+    </div>
+    <div class="hint" id="hint"></div>
+  </div>
+  <div class="strip"><div class="lab">Slide<br>order</div><div class="chips" id="chips"></div></div>
+  <aside class="side">
+    <div class="panel-h">Photos <small id="pcount"></small></div>
+    <div class="tray-tools"><button class="btn sm dark" id="bAddP">+ Add photos</button><button class="btn sm ghost" id="bAddF">+ Folder</button><label><input type="checkbox" id="onlyUn"> Unplaced only</label></div>
+    <div class="tray" id="tray"></div>
+    <div class="detail" id="detail"></div>
+  </aside>`;
+  scene=new Scene($('#msvg'));
+  $('#szr').value=P.size||1;
+  if(mapObj){scene.setMap(mapObj);requestAnimationFrame(()=>{view=scene.fit();refreshAll()})}
+  refreshAll();
+}
+function refreshAll(){
+  const has=!!mapObj;
+  $('#empty').classList.toggle('hide',has);$('#mtop').classList.toggle('hide',!has);
+  $('#bPresent').disabled=!has;$('#bExport').disabled=!has;
+  refreshTabs();refreshMap();refreshTray();refreshStrip();refreshDetail();refreshHint();
+}
+function refreshMap(){
+  if(!mapObj||!scene||!P)return;
+  // only this map's markers; numbers continue across maps (map 2 starts after map 1's last photo)
+  scene.draw({view,pins:mapPins(curMap),base:Math.max(0,P.pins.findIndex(p=>p.m===curMap)),sel,edit:true,size:P.size||1,mult:1,dim:false});
+  $('#msvg').classList.toggle('armed',!!sel&&!pinOf(sel));
+}
+function refreshTabs(){
+  const t=$('#mtabs');if(!t)return;
+  const multi=P.maps.length>1;t.classList.toggle('hide',!multi);
+  if(!multi){t.innerHTML='';return}
+  t.innerHTML=P.maps.map((m,g)=>{const n=mapPins(m.id).length,on=m.id===curMap;
+    return`<button class="mtab${on?' on':''}" data-map="${m.id}" title="${on?'Map options: rename, reorder, remove':'Switch to this site map'}"><b>${g+1}</b><span>${esc(m.name)}</span><small>(${n})</small>${on?'<i>&#9662;</i>':''}</button>`}).join('');
+}
+/* show another of the job's site maps; new markers go on the map on screen */
+function switchMap(id){
+  if(!mapObjs[id]||!scene)return;
+  closeMapMenu();
+  if(curMap&&curMap!==id)views[curMap]=view;
+  curMap=id;mapObj=mapObjs[id];scene.setMap(mapObj);
+  view=views[id]||scene.fit();
+  refreshAll();
+}
+function closeMapMenu(){const m=$('#mmenu');if(m)m.remove()}
+function openMapMenu(tab){
+  closeMapMenu();const g=P.maps.findIndex(m=>m.id===curMap),st=$('#stage');
+  const mm=document.createElement('div');mm.className='mmenu';mm.id='mmenu';
+  mm.innerHTML=`<button data-mm="ren">Rename this map</button><button data-mm="up"${g<=0?' disabled':''}>&#9664; Show earlier in slideshow</button><button data-mm="dn"${g>=P.maps.length-1?' disabled':''}>Show later in slideshow &#9654;</button><button data-mm="del" class="danger">Remove this map</button>`;
+  const r=tab.getBoundingClientRect(),s=st.getBoundingClientRect();
+  mm.style.left=Math.max(8,Math.min(r.left-s.left,s.width-240))+'px';mm.style.top=(r.bottom-s.top+6)+'px';
+  st.appendChild(mm);
+}
+function mapMenuAction(a){
+  const g=P.maps.findIndex(m=>m.id===curMap),m=P.maps[g];closeMapMenu();if(!m)return;
+  if(a==='ren'){const nn=prompt('Name this site map',m.name);if(nn&&nn.trim()){m.name=nn.trim().slice(0,40);P.updated=Date.now();save();refreshAll()}return}
+  if(a==='up'||a==='dn'){const h=g+(a==='dn'?1:-1);if(h<0||h>=P.maps.length)return;[P.maps[g],P.maps[h]]=[P.maps[h],P.maps[g]];sortPins();syncLegacy(P);P.updated=Date.now();save();refreshAll();return}
+  if(a==='del')return removeMap(m.id);
+}
+async function removeMap(id){
+  const m=P.maps.find(x=>x.id===id);if(!m||P.maps.length<2)return;
+  const n=mapPins(id).length;
+  if(!confirm(`Remove the site map "${m.name}"?${n?` Its ${n} marker${n===1?'':'s'} will be removed too. The photos stay in this job.`:''}`))return;
+  const g=P.maps.indexOf(m);
+  P.pins=P.pins.filter(p=>p.m!==id);P.maps.splice(g,1);
+  const o=mapObjs[id];if(o){URL.revokeObjectURL(o.src);URL.revokeObjectURL(o.tsrc)}delete mapObjs[id];delete views[id];
+  await DB.del('blobs',id);syncLegacy(P);P.updated=Date.now();save();
+  curMap=null;switchMap(P.maps[Math.max(0,g-1)].id);
+}
+function refreshHint(){
+  const h=$('#hint');if(!h)return;
+  if(!mapObj){h.classList.add('hide');return}
+  h.classList.remove('hide');
+  if(!P.photoIds.length)h.innerHTML='Now <b>add your photos</b> in the panel';
+  else if(sel&&!pinOf(sel)){const cm=P.maps.length>1&&P.maps.find(m=>m.id===curMap);h.innerHTML=`Tap ${cm?`<b>${esc(cm.name)}</b>`:'the map'} where photo <b>${P.photoIds.indexOf(sel)+1}</b> was taken &mdash; <b>drag</b> to aim the view`}
+  else if(sel)h.innerHTML='Drag the number to move it &middot; drag the white dot to aim';
+  else if(P.pins.length===P.photoIds.length)h.innerHTML='All photos placed &mdash; tap <b>Present</b>';
+  else h.innerHTML='Pick a photo, then tap the map';
+}
+function refreshTray(){
+  const t=$('#tray');if(!t)return;
+  const only=$('#onlyUn').checked;
+  const ids=P.photoIds.filter(id=>!only||!pinOf(id));
+  $('#pcount').textContent=`${P.photoIds.length} photos · ${P.pins.length} placed`;
+  if(!P.photoIds.length){t.innerHTML='<div class="drop"><b>Add photos or a whole folder</b><br>they stay on this device</div>';return}
+  t.innerHTML=ids.map(id=>{const p=pinOf(id);const n=p?P.pins.indexOf(p)+1:'';return`<div class="th${p?' placed':''}${id===sel?' sel':''}" data-id="${id}" title="${esc(photos[id].name)}" style="background-image:url(${photos[id].tsrc})">${p?`<i>${n}</i>`:''}</div>`}).join('')||'<div class="drop">Everything is placed</div>';
+}
+function refreshStrip(){
+  const c=$('#chips');if(!c)return;
+  const chip=(p,i)=>`<div class="chip${p.id===sel?' sel':''}" draggable="true" data-i="${i}" data-id="${p.id}" style="background-image:url(${photos[p.id].tsrc})"><i>${i+1}</i></div>`;
+  if(P.maps.length>1){ // a divider for each map, then the photos placed on it
+    c.innerHTML=P.maps.map((m,g)=>{const own=P.pins.map((p,i)=>p.m===m.id?chip(p,i):'').join('');
+      return`<div class="mdiv${m.id===curMap?' on':''}" data-map="${m.id}" title="The slideshow switches to this map here"><small>Map ${g+1}</small><span>${esc(m.name)}</span></div>${own||'<div class="none sm">no photos yet</div>'}`}).join('');
+    return;
+  }
+  if(!P.pins.length){c.innerHTML='<div class="none">Placed photos appear here in presentation order.</div>';return}
+  c.innerHTML=P.pins.map(chip).join('');
+}
+function refreshDetail(){
+  const d=$('#detail');if(!d)return;
+  if(!sel||!photos[sel]){d.innerHTML='<div class="nm" style="font-size:15px">Select a photo to place it on the map.</div>';return}
+  const ph=photos[sel],pin=pinOf(sel),i=pin?P.pins.indexOf(pin):-1;
+  // Earlier / Later only move a photo within its own site map
+  const first=i<=0||P.pins[i-1].m!==pin.m,last=i<0||i===P.pins.length-1||P.pins[i+1].m!==pin.m;
+  const onMap=pin&&P.maps.length>1?(P.maps.find(m=>m.id===pin.m)||{}).name:'';
+  d.innerHTML=`<div class="pv" style="background-image:url(${ph.src})"></div>
+  <div class="nm">${esc(ph.name)}${pin?` &middot; photo ${i+1} of ${P.pins.length} in the slideshow${onMap?` &middot; on ${esc(onMap)}`:''}`:' &middot; not placed yet'}</div>
+  <input type="text" id="cap" placeholder="Caption (shown on the slide)" maxlength="120" value="${esc(pin?pin.cap:(ph.cap||''))}">
+  <div class="row">${pin?`<button class="btn sm ghost" id="mvL" title="Show earlier in the slideshow"${first?' disabled':''}>&#9664; Earlier</button><button class="btn sm ghost" id="mvR" title="Show later in the slideshow"${last?' disabled':''}>Later &#9654;</button><button class="btn sm ghost" id="rotL" title="Rotate left">&#8634; 15&deg;</button><button class="btn sm ghost" id="rotR" title="Rotate right">&#8635; 15&deg;</button><button class="btn sm ghost" id="rmPin">Remove marker</button>`:''}<button class="btn sm ghost" id="rmPhoto">Delete photo</button></div>`;
+}
+$('#editor').addEventListener('input',e=>{
+  if(e.target.id==='cap'&&sel){const pin=pinOf(sel);if(pin){pin.cap=e.target.value}else photos[sel].cap=e.target.value;save()}
+  if(e.target.id==='szr'){P.size=+e.target.value;refreshMap();save()}
+});
+$('#editor').addEventListener('change',e=>{if(e.target.id==='onlyUn')refreshTray()});
+$('#editor').addEventListener('click',async e=>{
+  const id=e.target.id;
+  const mm=e.target.closest('[data-mm]');if(mm)return mapMenuAction(mm.dataset.mm);
+  const tab=e.target.closest('.mtab');if(tab){if(tab.dataset.map===curMap){if($('#mmenu'))closeMapMenu();else openMapMenu(tab)}else switchMap(tab.dataset.map);return}
+  const md=e.target.closest('.mdiv');if(md)return switchMap(md.dataset.map);
+  if(id==='bPickMap'||id==='bAddMap'){mapMode='add';return $('#fileMap').click()}
+  if(id==='bRepl'){mapMode='replace';return $('#fileMap').click()}
+  if(id==='bAddP')return $('#filePhotos').click();
+  if(id==='bAddF')return $('#fileFolder').click();
+  if(id==='zIn')return zoomBy(1.4);if(id==='zOut')return zoomBy(1/1.4);
+  if(id==='zFit'){view=scene.fit();return refreshMap()}
+  if(id==='rotL'||id==='rotR'){const p=pinOf(sel);p.a=((p.a+(id==='rotR'?15:-15))%360+360)%360;refreshMap();save();return}
+  if(id==='mvL'||id==='mvR'){const p=pinOf(sel),i=P.pins.indexOf(p),j=i+(id==='mvR'?1:-1);if(j>=0&&j<P.pins.length&&P.pins[j].m===p.m){[P.pins[i],P.pins[j]]=[P.pins[j],P.pins[i]];save();refreshAll()}return}
+  if(id==='rmPin')return removePin(sel);
+  if(id==='rmPhoto')return removePhoto(sel);
+  if(e.target.closest('.pv')&&sel&&photos[sel]){
+    const lb=document.createElement('div');lb.className='lb';lb.innerHTML=`<img src="${photos[sel].src}" alt="">`;
+    const off=()=>{lb.remove();document.removeEventListener('keydown',k,true)};const k=ev=>{if(ev.key==='Escape'){ev.stopPropagation();off()}};
+    lb.onclick=off;document.addEventListener('keydown',k,true);document.body.appendChild(lb);return;
+  }
+  const th=e.target.closest('.th');
+  if(th){selectPhoto(th.dataset.id);return}
+  const ch=e.target.closest('.chip');if(ch){selectPhoto(ch.dataset.id)}
+});
+function selectPhoto(id){
+  sel=id;
+  const pin=pinOf(id);
+  if(pin&&pin.m!==curMap)switchMap(pin.m); // a photo placed on another site map: show that map
+  if(pin&&mapObj){ // bring pin into view if off-screen
+    const w=scene.svg.clientWidth,h=scene.svg.clientHeight,sx=view.x+pin.x*mapObj.w*view.k,sy=view.y+pin.y*mapObj.h*view.k;
+    if(sx<40||sy<40||sx>w-40||sy>h-40){view.x+=w/2-sx;view.y+=h/2-sy}
+  }
+  refreshMap();refreshTray();refreshStrip();refreshDetail();refreshHint();
+}
+function removePin(id){P.pins=P.pins.filter(p=>p.id!==id);P.updated=Date.now();save();refreshAll()}
+async function removePhoto(id){
+  if(!confirm('Delete this photo from the project?'))return;
+  const next=nextUnplaced(id);
+  P.pins=P.pins.filter(p=>p.id!==id);P.photoIds=P.photoIds.filter(i=>i!==id);delete photos[id];await DB.del('blobs',id);
+  sel=next&&next!==id?next:null;save();refreshAll();
+}
+document.addEventListener('keydown',e=>{
+  if(!P||$('#show')||e.target.matches('input,textarea,select'))return;
+  if((e.key==='Delete'||e.key==='Backspace')&&sel&&pinOf(sel)){e.preventDefault();removePin(sel)}
+  if(e.key==='Escape'){closeMapMenu();sel=null;refreshAll()}
+});
+$('#pname').addEventListener('input',e=>{if(P){P.name=e.target.value;save()}});
+
+/* ---- map pan / pinch-zoom / place / move / rotate (mouse, pen and touch) ---- */
+function zoomBy(f,cx,cy){
+  const s=$('#msvg');cx=cx??s.clientWidth/2;cy=cy??s.clientHeight/2;
+  const fit=scene.fit(1).k,nk=Math.min(fit*30,Math.max(fit*.4,view.k*f)),r=nk/view.k;
+  view={x:cx-(cx-view.x)*r,y:cy-(cy-view.y)*r,k:nk};refreshMap();
+}
+let drag=null,pinch=null;const tps=new Map();
+function ptr(e){const r=$('#msvg').getBoundingClientRect();return{sx:e.clientX-r.left,sy:e.clientY-r.top}}
+function toNorm(sx,sy){return{x:Math.min(1,Math.max(0,(sx-view.x)/(view.k*mapObj.w))),y:Math.min(1,Math.max(0,(sy-view.y)/(view.k*mapObj.h)))}}
+function pinScreen(p){return{x:view.x+p.x*mapObj.w*view.k,y:view.y+p.y*mapObj.h*view.k}}
+document.addEventListener('wheel',e=>{
+  if(!e.target.closest||!e.target.closest('#msvg')||!mapObj)return;e.preventDefault();
+  const{sx,sy}=ptr(e);zoomBy(Math.exp(-e.deltaY*.0016),sx,sy);
+},{passive:false});
+document.addEventListener('pointerdown',e=>{
+  const svg=e.target.closest&&e.target.closest('#msvg');if(!svg||!mapObj)return;
+  try{svg.setPointerCapture(e.pointerId)}catch(_){}
+  const{sx,sy}=ptr(e);tps.set(e.pointerId,{sx,sy});
+  if(tps.size===2){ // second finger: switch to pinch-zoom
+    if(drag&&drag.fresh&&!drag.moved){P.pins=P.pins.filter(p=>p!==drag.pin);refreshMap()}
+    drag=null;svg.classList.remove('panning');
+    const[a,b]=[...tps.values()];
+    pinch={d:Math.hypot(a.sx-b.sx,a.sy-b.sy)||1,k:view.k,x:view.x,y:view.y,cx:(a.sx+b.sx)/2,cy:(a.sy+b.sy)/2};return;
+  }
+  if(tps.size>2)return;
+  const mk=e.target.closest('.mk');
+  if(e.button===1||e.button===2){drag={t:'pan',sx,sy,vx:view.x,vy:view.y};svg.classList.add('panning');e.preventDefault();return}
+  if(e.button!==0)return;
+  if(mk&&e.target.classList.contains('handle')){const pin=pinOf(mk.dataset.id);drag={t:'rot',pin};return}
+  if(mk){const pin=pinOf(mk.dataset.id);const ps=pinScreen(pin);sel=pin.id;drag={t:'move',pin,dx:ps.x-sx,dy:ps.y-sy,moved:false};refreshAll();return}
+  if(sel&&!pinOf(sel)){const n=toNorm(sx,sy);const pin={id:sel,m:curMap,x:n.x,y:n.y,a:0,cap:photos[sel].cap||''};P.pins.push(pin);sortPins();drag={t:'rot',pin,fresh:true,ox:sx,oy:sy,moved:false};refreshMap();return}
+  drag={t:'pan',sx,sy,vx:view.x,vy:view.y,click:true};svg.classList.add('panning');
+});
+document.addEventListener('pointermove',e=>{
+  if(tps.has(e.pointerId)){const{sx,sy}=ptr(e);tps.set(e.pointerId,{sx,sy})}
+  if(pinch&&tps.size===2){
+    const[a,b]=[...tps.values()],d=Math.hypot(a.sx-b.sx,a.sy-b.sy)||1,cx=(a.sx+b.sx)/2,cy=(a.sy+b.sy)/2;
+    const fit=scene.fit(1).k,nk=Math.min(fit*30,Math.max(fit*.4,pinch.k*d/pinch.d)),r=nk/pinch.k;
+    view={k:nk,x:cx-(pinch.cx-pinch.x)*r,y:cy-(pinch.cy-pinch.y)*r};refreshMap();return;
+  }
+  if(!drag)return;const{sx,sy}=ptr(e);
+  if(drag.t==='pan'){const dx=sx-drag.sx,dy=sy-drag.sy;if(Math.abs(dx)+Math.abs(dy)>3)drag.click=false;view.x=drag.vx+dx;view.y=drag.vy+dy;refreshMap()}
+  else if(drag.t==='move'){const n=toNorm(sx+drag.dx,sy+drag.dy);drag.pin.x=n.x;drag.pin.y=n.y;drag.moved=true;refreshMap()}
+  else if(drag.t==='rot'){const ps=pinScreen(drag.pin),dx=sx-ps.x,dy=sy-ps.y;if(Math.hypot(dx,dy)>14){drag.pin.a=Math.round((Math.atan2(dx,-dy)*180/Math.PI+360)%360);drag.moved=true;refreshMap()}}
+});
+function endPointer(e){
+  tps.delete(e.pointerId);
+  if(pinch){if(tps.size<2)pinch=null;return}
+  if(!drag)return;const d=drag;drag=null;$('#msvg')&&$('#msvg').classList.remove('panning');
+  if(e.type==='pointercancel'){if(d.fresh){P.pins=P.pins.filter(p=>p!==d.pin);refreshMap()}return}
+  if(d.t==='pan'&&d.click){sel=null;refreshAll();return}
+  if(d.t==='pan')return;
+  P.updated=Date.now();save();
+  if(d.fresh){const nx=nextUnplaced(d.pin.id);sel=nx&&nx!==d.pin.id?nx:d.pin.id}
+  refreshAll();
+}
+// tapping anywhere outside the map menu closes it
+document.addEventListener('pointerdown',e=>{if($('#mmenu')&&!(e.target.closest&&e.target.closest('#mmenu,.mtab.on')))closeMapMenu()},true);
+document.addEventListener('pointerup',endPointer);
+document.addEventListener('pointercancel',endPointer);
+document.addEventListener('contextmenu',e=>{if(e.target.closest&&e.target.closest('#msvg'))e.preventDefault()});
+window.addEventListener('resize',()=>{if(scene&&mapObj&&P&&!$('#show'))refreshMap()});
+
+/* ---- reorder slides by dragging (mouse); touch uses the Earlier / Later buttons ---- */
+let dragI=null;
+document.addEventListener('dragstart',e=>{const c=e.target.closest&&e.target.closest('.chip');if(c){dragI=+c.dataset.i;e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain','x')}});
+document.addEventListener('dragover',e=>{const c=e.target.closest&&e.target.closest('.chip');if(c&&dragI!==null){e.preventDefault();document.querySelectorAll('.chip.dragover').forEach(x=>x.classList.remove('dragover'));c.classList.add('dragover')}});
+document.addEventListener('drop',e=>{
+  const c=e.target.closest&&e.target.closest('.chip');
+  if(c&&dragI!==null){e.preventDefault();const to=+c.dataset.i;if(to!==dragI){
+    if(P.pins[to].m!==P.pins[dragI].m)toast('Photos can only be reordered within their own site map. To move one to another map, remove its marker and place it on that map.',5500);
+    else{const [m]=P.pins.splice(dragI,1);P.pins.splice(to,0,m);save();refreshAll()}}}
+  dragI=null;document.querySelectorAll('.chip.dragover').forEach(x=>x.classList.remove('dragover'));
+});
+document.addEventListener('dragend',()=>{dragI=null;document.querySelectorAll('.chip.dragover').forEach(x=>x.classList.remove('dragover'))});
+
+/* ---- file intake ---- */
+/* add: a new site map for this job (e.g. a building floor plan). Otherwise: new image for the map on screen. */
+async function setMap(file,add){
+  if(!isImg(file))return toast('That file is not an image');
+  add=add||!curMap;
+  toast('Loading map…',1500);
+  try{
+    const r=await processImage(file,6000,.93,640);
+    const id=add?'map-'+uid():curMap;
+    await DB.put('blobs',{id,pid:P.id,kind:'map',name:file.name,blob:r.blob,thumb:r.thumb,w:r.w,h:r.h});
+    const old=mapObjs[id];if(old){URL.revokeObjectURL(old.src);URL.revokeObjectURL(old.tsrc)}
+    mapObjs[id]={src:URL.createObjectURL(r.blob),tsrc:URL.createObjectURL(r.thumb),w:r.w,h:r.h};
+    let m=P.maps.find(x=>x.id===id);
+    if(m){m.w=r.w;m.h=r.h}
+    else{
+      let name=P.maps.length?`Map ${P.maps.length+1}`:'Site map';
+      if(P.maps.length){const nn=prompt('Name this site map (for example "Building A interior")',name);if(nn&&nn.trim())name=nn.trim().slice(0,40)}
+      m={id,name,w:r.w,h:r.h};P.maps.push(m);
+    }
+    syncLegacy(P);P.updated=Date.now();save();
+    if(curMap&&curMap!==id)views[curMap]=view;
+    delete views[id];curMap=null;switchMap(id);
+    if(add&&P.maps.length>1)toast(`Added "${m.name}" — photos you place now go on this map`,4000);
+  }catch(err){console.error(err);toast('Could not read that map image (try JPG or PNG)')}
+}
+async function addPhotos(files){
+  files=[...files].filter(isImg).sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
+  if(!files.length)return toast('No images found');
+  let ok=0,bad=0,first=null;
+  for(const f of files){
+    toast(`Adding photos… ${ok+bad+1} / ${files.length}`,60000);
+    try{
+      const r=await processImage(f,3600,.93);
+      const id=uid();
+      await DB.put('blobs',{id,pid:P.id,kind:'photo',name:f.name,blob:r.blob,thumb:r.thumb,w:r.w,h:r.h});
+      photos[id]={id,name:f.name,blob:r.blob,thumb:r.thumb,w:r.w,h:r.h,src:URL.createObjectURL(r.blob),tsrc:URL.createObjectURL(r.thumb)};
+      P.photoIds.push(id);ok++;first=first||id;
+    }catch(e){bad++;console.warn(f.name,e);if(bad===1)toast('Could not read '+f.name+' ('+(e&&e.message||'unknown')+')',6000)}
+    if(ok%5===0)refreshTray();
+  }
+  document.querySelectorAll('.toast').forEach(t=>t.remove());
+  toast(`Added ${ok} photo${ok===1?'':'s'}${bad?` · ${bad} could not be read (unsupported or corrupt)`:''}`,bad?6000:2500);
+  if(first&&(!sel||pinOf(sel)))sel=first;
+  P.updated=Date.now();save();refreshAll();
+}
+$('#fileMap').addEventListener('change',e=>{if(e.target.files[0])setMap(e.target.files[0],mapMode==='add');e.target.value=''});
+$('#filePhotos').addEventListener('change',e=>{addPhotos(e.target.files);e.target.value=''});
+$('#fileFolder').addEventListener('change',e=>{addPhotos(e.target.files);e.target.value=''});
+async function readEntry(en,out){
+  if(en.isFile)await new Promise(r=>en.file(f=>{out.push(f);r()},r));
+  else if(en.isDirectory){const rd=en.createReader();let batch;do{batch=await new Promise(r=>rd.readEntries(r,()=>r([])));for(const c of batch)await readEntry(c,out)}while(batch.length)}
+}
+async function filesFromDrop(dt){
+  const direct=[...dt.files];
+  const items=[...dt.items||[]].map(i=>{try{return i.webkitGetAsEntry&&i.webkitGetAsEntry()}catch(e){return null}}).filter(Boolean);
+  const out=[];
+  try{for(const en of items)await readEntry(en,out)}catch(e){console.warn(e)}
+  return out.length?out:direct;
+}
+['dragenter','dragover'].forEach(t=>document.addEventListener(t,e=>{
+  if(!P||!e.dataTransfer||![...e.dataTransfer.types].includes('Files'))return;e.preventDefault();
+  const st=e.target.closest&&e.target.closest('#stage'),tr=e.target.closest&&e.target.closest('.side');
+  $('#stage')&&$('#stage').classList.toggle('over',!!st);$('#tray')&&$('#tray').classList.toggle('over',!!tr);
+}));
+document.addEventListener('dragleave',e=>{if(!e.relatedTarget){$('#stage')&&$('#stage').classList.remove('over');$('#tray')&&$('#tray').classList.remove('over')}});
+document.addEventListener('drop',async e=>{
+  if(!P||!e.dataTransfer||![...e.dataTransfer.types].includes('Files'))return;e.preventDefault();
+  $('#stage')&&$('#stage').classList.remove('over');$('#tray')&&$('#tray').classList.remove('over');
+  const st=e.target.closest('#stage');
+  let files=[];
+  try{files=await filesFromDrop(e.dataTransfer)}catch(err){console.error(err)}
+  const imgs=files.filter(isImg);
+  if(files.some(f=>/\.(crdownload|part|tmp)$/i.test(f.name)))return toast('That file is still downloading — wait for the download to finish, then try again');
+  if(!imgs.length)return toast(files.length?'Could not use that file ('+(files[0].name||'unnamed')+') — it does not look like an image':'The browser did not hand over a file. Drag it from a Windows folder, or use Add photos',7000);
+  if(st){
+    const cm=P.maps.length>1&&P.maps.find(m=>m.id===curMap);
+    if(!mapObj||confirm(`Replace ${cm?`the site map "${cm.name}"`:'the site map'} with this image? Your markers stay where they are. (To add another map instead, use + Add site map.)`))setMap(imgs[0],!mapObj);
+  }else addPhotos(imgs);
+});
+
+/* ================= PRESENTATION ================= */
+const dataURL=async u=>blobToDataURL(await(await fetch(u)).blob());
+/* slideshow data for one job: its site maps in order, each with the photos placed on it.
+   Photo numbers (n) run on across maps. Extra maps with no photos placed are left out. */
+function jobShowData(p,maps,pics,pm){
+  const out=[];let n=0;
+  for(const m of p.maps){
+    const mo=maps[m.id];if(!mo)continue;
+    const pins=p.pins.filter(x=>x.m===m.id&&pics[x.id]).map(x=>({id:x.id,x:x.x,y:x.y,a:x.a,cap:x.cap||'',name:pics[x.id].name,src:pics[x.id].src,tsrc:pics[x.id].tsrc}));
+    if(out.length&&!pins.length)continue;
+    pins.forEach(q=>q.n=++n);
+    out.push({name:m.name||'',src:mo.src,w:mo.w,h:mo.h,pins});
+  }
+  return out.length?{name:p.name,pm,date:p.date,size:p.size||1,maps:out}:null;
+}
+function buildShowData(){return jobShowData(P,mapObjs,photos,curPMName)}
+async function showDataFor(pid){
+  if(P&&P.id===pid&&mapObj)return buildShowData();
+  const p=await DB.get('projects',pid);if(!p)return null;normProject(p);if(!p.maps.length)return null;
+  const mids=new Set(p.maps.map(m=>m.id)),pids=new Set(p.pins.map(x=>x.id)),maps={},pics={};
+  for(const b of await DB.byPid(pid)){
+    if(mids.has(b.id))maps[b.id]={src:URL.createObjectURL(b.blob),w:b.w,h:b.h};
+    else if(pids.has(b.id))pics[b.id]={name:b.name,src:URL.createObjectURL(b.blob),tsrc:URL.createObjectURL(b.thumb)};
+  }
+  const pm=await DB.get('pms',p.pmId);
+  return jobShowData(p,maps,pics,pm?pm.name:'');
+}
+function startShow(Ds,opts={}){
+  // slideshow files saved by the older version have one map per job: treat it as a one-map list
+  Ds=Ds.map(D=>D.maps?D:{...D,maps:[{...D.map,name:'',pins:D.pins.map((p,k)=>({...p,n:k+1}))}]});
+  const embedded=!!opts.embedded,multi=Ds.length>1;
+  // one slide per map overview, then one per photo on that map
+  const S=[];Ds.forEach((D,j)=>D.maps.forEach((M,g)=>{S.push({j,g,i:0});M.pins.forEach((p,k)=>S.push({j,g,i:k+1,n:p.n}))}));
+  const total=D=>D.maps.reduce((s,M)=>s+M.pins.length,0);
+  const el=document.createElement('div');el.id='show';el.className='anim';
+  el.innerHTML=`<div class="s-head"><div class="s-logo">${LOGO_HTML}</div><div class="s-title" id="sTitle"></div><div class="s-date" id="sSub"></div><div class="grow"></div>${multi?'<span class="s-job" id="sJob"></span>':''}<span class="tag dark" id="sTag"></span></div>
+  <div class="s-main" id="sMain"><div class="s-map"><svg id="sSvg"></svg></div><div class="s-side" id="sSide"></div></div>
+  <div class="s-foot"><div class="s-cap" id="sCap"></div><div class="tools"><button data-a="zoom" title="Zoom map to marker (Z)">Zoom</button><button data-a="layout" title="Change layout (V)">Layout</button>${IS_IOS?'':'<button data-a="full" title="Fullscreen (F)">&#9974;</button>'}${embedded?'':'<button data-a="exit" title="Exit (Esc)">Exit</button>'}</div><div class="segs" id="segs"></div><div class="nav"><button data-a="prev" title="Previous (←)">&#9664;</button><button data-a="next" title="Next (→)">&#9654;</button></div></div>`;
+  document.body.appendChild(el);
+  const sc=new Scene($('#sSvg',el));
+  let c=0,layout='auto',zoom=0,curJ=-1,curKey='';const ZOOMS=[0,2.5,5];
+  const segs=$('#segs',el);
+  const mapName=(D,g)=>D.maps[g].name||('Site map '+(g+1));
+  segs.innerHTML=S.map((s,k)=>{const D=Ds[s.j];return`<button class="seg${s.i===0&&s.g===0&&s.j>0?' gap':''}${s.i===0&&s.g>0?' mgap':''}" data-i="${k}" title="${esc(D.name)} — ${s.i?'Photo '+s.n:(D.maps.length>1?esc(mapName(D,s.g)):'Overview')}"></button>`}).join('');
+  const jobStart=j=>S.findIndex(s=>s.j===j&&s.i===0);
+  const layoutClass=()=>layout==='auto'?(S[c].i===0?'overview':'split'):layout;
+  function draw(){
+    const{j,g,i}=S[c],D=Ds[j],M=D.maps[g];
+    const w=sc.svg.clientWidth,h=sc.svg.clientHeight;if(!w||!h)return;
+    const f=sc.fit(.94);let v=f;
+    if(i>0&&zoom){const p=M.pins[i-1],k=f.k*ZOOMS[zoom];v={k,x:w/2-p.x*M.w*k,y:h/2-p.y*M.h*k}}
+    const mult=Math.max(.9,Math.min(1.6,w/560))*(i===0?.85:1);
+    sc.draw({view:v,pins:M.pins,activeId:i>0?M.pins[i-1].id:null,size:D.size,mult,dim:i>0,edit:false});
+  }
+  function render(){
+    const{j,g,i}=S[c],D=Ds[j],M=D.maps[g],n=M.pins.length,G=D.maps.length;
+    if(j+':'+g!==curKey){ // new job or the next site map of this job
+      curKey=j+':'+g;sc.setMap(M);
+      el.classList.add('noanim');requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.remove('noanim')));
+    }
+    if(j!==curJ){
+      curJ=j;
+      $('#sTitle',el).textContent=D.name;
+      $('#sSub',el).textContent=[D.pm,fmtDate(opts.date||D.date)].filter(Boolean).join(' · ');
+      if(multi)$('#sJob',el).textContent=`Job ${j+1} of ${Ds.length}`;
+    }
+    $('#sMain',el).className='s-main '+layoutClass();
+    const side=$('#sSide',el);
+    if(i===0){
+      side.innerHTML=`<div class="legend"><h4>${G>1?esc(mapName(D,g)):'Photo locations'}</h4>${n?`<ol>${M.pins.map(p=>`<li data-n="${p.n}"><span class="n">${p.n}</span><img src="${p.tsrc||p.src}" alt=""><em>${esc(p.cap||'Photo '+p.n)}</em></li>`).join('')}</ol>`:'<div class="none">No photos placed yet.</div>'}</div>`;
+      $('#sTag',el).textContent=G>1?`Site map ${g+1} / ${G}`:'Site overview';
+      $('#sCap',el).innerHTML=`<small>${G>1?esc(mapName(D,g)):'Overview'}</small>${n} photo location${n===1?'':'s'}`;
+    }else{
+      const p=M.pins[i-1];
+      side.innerHTML=`<div class="ph-wrap"><img class="ph" src="${p.src}" alt=""></div>`;
+      $('#sTag',el).textContent=`Photo ${p.n} / ${total(D)}`;
+      $('#sCap',el).innerHTML=`<small>Photo ${p.n}</small>${esc(p.cap)}`;
+    }
+    [...segs.children].forEach((b,k)=>{b.classList.toggle('on',k===c);b.classList.toggle('done',k<c)});
+    const zb=$('[data-a=zoom]',el);zb.classList.toggle('on',!!zoom&&i>0);zb.textContent=zoom&&i>0?`Zoom ${ZOOMS[zoom]}×`:'Zoom';
+    draw();
+    const nx=S[c+1];if(nx&&nx.i>0){const im=new Image();im.src=Ds[nx.j].maps[nx.g].pins[nx.i-1].src}
+  }
+  const photoSlide=(j,n)=>S.findIndex(s=>s.j===j&&s.n===n);
+  const go=k=>{c=Math.max(0,Math.min(S.length-1,k));render()};
+  function close(){document.removeEventListener('keydown',onKey);document.removeEventListener('fullscreenchange',onFs);ro.disconnect();el.remove();if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});if(P&&scene&&mapObj)refreshMap()}
+  function toggleFull(){if(document.fullscreenElement)document.exitFullscreen();else if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{})}
+  const act={prev:()=>go(c-1),next:()=>go(c+1),zoom:()=>{zoom=(zoom+1)%ZOOMS.length;render()},layout:()=>{const o=['auto','photo','map'];layout=o[(o.indexOf(layout)+1)%o.length];render()},full:toggleFull,exit:close};
+  function onKey(e){
+    const k=e.key,{j,i}=S[c];
+    if(k==='ArrowRight'||k===' '||k==='PageDown'||k==='Enter'){e.preventDefault();go(c+1)}
+    else if(k==='ArrowLeft'||k==='PageUp'||k==='Backspace'){e.preventDefault();go(c-1)}
+    else if(k==='Home')go(0);else if(k==='End')go(S.length-1);
+    else if(k==='n'||k==='N'){if(j<Ds.length-1)go(jobStart(j+1))}
+    else if(k==='p'||k==='P'){go(i>0?jobStart(j):(j>0?jobStart(j-1):0))}
+    else if(k==='z'||k==='Z')act.zoom();else if(k==='v'||k==='V')act.layout();else if(k==='f'||k==='F')toggleFull();
+    else if(k==='Escape'&&!embedded)close();
+    else if(/^[0-9]$/.test(k)&&+k<=Ds[j].pins.length)go(jobStart(j)+(+k));
+  }
+  function onFs(){if(!document.fullscreenElement&&!embedded&&!IS_IOS)close()}
+  document.addEventListener('keydown',onKey);document.addEventListener('fullscreenchange',onFs);
+  el.addEventListener('click',e=>{
+    const b=e.target.closest('[data-a]');if(b)return act[b.dataset.a]();
+    const s=e.target.closest('.seg');if(s)return go(+s.dataset.i);
+    const li=e.target.closest('li[data-i]');if(li)return go(jobStart(S[c].j)+(+li.dataset.i));
+    const mk=e.target.closest('.mk');if(mk&&S[c].i===0){const k=Ds[S[c].j].pins.findIndex(p=>p.id===mk.dataset.id);if(k>=0)go(c+k+1)}
+  });
+  /* touch: swipe left/right to change slides, tap the photo (right = next, left = back).
+     touchmove is blocked so Safari's toolbars can't slide in and out and resize the page. */
+  let tt=null;
+  el.addEventListener('touchstart',e=>{if(e.touches.length===1&&!e.target.closest('button,.legend'))tt={x:e.touches[0].clientX,y:e.touches[0].clientY,t:Date.now()};else tt=null},{passive:true});
+  el.addEventListener('touchmove',e=>{if(!e.target.closest('.legend'))e.preventDefault()},{passive:false});
+  el.addEventListener('touchend',e=>{
+    if(!tt)return;const a=tt;tt=null;const t=e.changedTouches[0],dx=t.clientX-a.x,dy=t.clientY-a.y;
+    if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.4){go(c+(dx<0?1:-1))}
+    else if(Math.abs(dx)<12&&Math.abs(dy)<12&&Date.now()-a.t<450&&e.target.closest('.ph-wrap,.ph')){go(t.clientX<innerWidth*.3?c-1:c+1);e.preventDefault()}
+  });
+  const ro=new ResizeObserver(()=>{el.classList.add('noanim');draw();requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.remove('noanim')))});
+  ro.observe(sc.svg);
+  if(!embedded&&!IS_IOS)toggleFull();
+  render();
+  return{go};
+}
+
+/* ---- export a standalone slideshow file ---- */
+async function exportShow(Ds,title,date){
+  toast('Building slideshow file…',60000);
+  try{
+    const out=[];
+    for(const D of Ds){const E={...D,map:{...D.map,src:await dataURL(D.map.src)},pins:[]};
+      for(const p of D.pins)E.pins.push({...p,src:await dataURL(p.src),tsrc:await dataURL(p.tsrc||p.src)});out.push(E)}
+    const json=JSON.stringify({title,date,jobs:out}).replace(/</g,'\\u003c');
+    const html=SOURCE.replace('EMBED=null;/*@@'+'EMBED@@*/',()=>'EMBED='+json+';/*@@'+'EMBED@@*/').replace(/<title>.*?<\/title>/,()=>'<title>'+esc(title)+' – TWX Site Photos</title>');
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([html],{type:'text/html'}));
+    a.download=(title.replace(/[^\w\- ]+/g,'').trim()||'TWX')+' - Site Photo Slideshow.html';document.body.appendChild(a);a.click();a.remove();
+    document.querySelectorAll('.toast').forEach(t=>t.remove());toast('Slideshow saved — open it on any device, no internet or app needed');
+  }catch(e){console.error(e);document.querySelectorAll('.toast').forEach(t=>t.remove());toast('Export failed')}
+}
+$('#bPresent').addEventListener('click',()=>{if(P&&mapObj)startShow([buildShowData()])});
+$('#bExport').addEventListener('click',()=>{if(P&&mapObj)exportShow([buildShowData()],P.name,P.date)});
+
+/* ================= boot ================= */
+(async()=>{
+  if(EMBED){
+    const jobs=EMBED.jobs||[EMBED],title=EMBED.title||EMBED.name;
+    document.body.innerHTML='';document.title=title+' – TWX Site Photos';
+    const start=document.createElement('div');start.style.cssText='position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#1a1a1a';
+    start.innerHTML='<button class="btn amber" style="font-size:22px;padding:16px 46px">▶ Start slideshow</button>';document.body.appendChild(start);
+    start.firstChild.addEventListener('click',()=>{if(!IS_IOS&&document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{});start.remove();startShow(jobs,{embedded:true,date:EMBED.date})});
+    return;
+  }
+  try{
+    if(!window.indexedDB)throw new Error('this browser has no IndexedDB');
+    await Promise.race([DB.open(),new Promise((_,rej)=>setTimeout(()=>rej(new Error('the browser never answered the storage request')),6000))]);
+    await migrate();await showHome();
+  }catch(e){
+    console.error(e);
+    msg('The app could not start: '+(e&&e.message||e)+'. Open the link directly in Chrome, Edge or Safari (not inside an email, Teams, Slack or GitHub app), outside private/incognito mode, and close any other tabs with this app.');
+  }
+})();
+</script>
+</body>
+</html>

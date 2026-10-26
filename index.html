@@ -105,7 +105,24 @@ img{-webkit-user-drag:none}
 .empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:30px;background:repeating-linear-gradient(120deg,#e9e7de 0 22px,#e3e1d6 22px 44px)}
 .empty h3{margin:0;font-family:var(--display);font-weight:400;font-size:34px;letter-spacing:3px;text-transform:uppercase}
 .empty p{margin:0;max-width:440px;color:var(--mute);font-size:18px}
-.mtools{position:absolute;left:14px;top:34px;display:flex;gap:8px;align-items:center;z-index:4;flex-wrap:wrap}
+.mtop{position:absolute;left:14px;right:14px;top:34px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;z-index:4;pointer-events:none}
+.mtools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;pointer-events:none}
+.mtools>*{pointer-events:auto}
+/* site map tabs (only when a job has more than one map) */
+.mtabs{display:flex;gap:4px;flex-wrap:wrap;background:var(--ink);padding:5px;box-shadow:0 2px 8px rgba(0,0,0,.25);pointer-events:auto;max-width:100%}
+.mtab{appearance:none;border:0;cursor:pointer;background:#333;color:#fff;font-weight:700;font-size:15px;height:40px;padding:0 22px 0 18px;display:flex;align-items:center;gap:8px;max-width:270px;clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%)}
+.mtab:hover{background:#4a4a4a}
+.mtab b{flex:none;background:var(--amber);color:var(--ink);min-width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800}
+.mtab span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mtab small{flex:none;font-size:13px;opacity:.75}
+.mtab i{font-style:normal;font-size:12px}
+.mtab.on{background:var(--amber);color:var(--ink)}
+.mtab.on b{background:var(--ink);color:var(--amber)}
+.mmenu{position:absolute;z-index:6;background:#fff;min-width:230px;box-shadow:0 10px 30px rgba(0,0,0,.3);border-top:4px solid var(--amber);display:flex;flex-direction:column}
+.mmenu button{appearance:none;border:0;background:#fff;text-align:left;padding:14px 18px;font-weight:700;font-size:15px;cursor:pointer}
+.mmenu button:hover{background:#fff3cd}
+.mmenu button[disabled]{opacity:.35;pointer-events:none}
+.mmenu button.danger{color:#b42318}
 .mtools .grp{display:flex;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.2)}
 .mtools .grp button{border:0;background:#fff;width:44px;height:40px;cursor:pointer;font-size:19px;font-weight:700}
 .mtools .grp button:hover{background:var(--amber)}
@@ -122,6 +139,12 @@ img{-webkit-user-drag:none}
 .chip.dragover{box-shadow:-6px 0 0 var(--amber)}
 .chip i{position:absolute;left:0;top:0;background:var(--ink);color:var(--amber);font-style:normal;font-weight:800;min-width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:14px}
 .chips .none{color:var(--mute);font-size:16px;padding:0 10px}
+/* map divider in the slide order: the slideshow switches to this map here */
+.mdiv{flex:none;height:92px;min-width:100px;max-width:150px;background:var(--ink);color:#fff;display:flex;flex-direction:column;justify-content:center;padding:6px 24px 6px 12px;cursor:pointer;font-weight:800;font-size:14px;line-height:1.15;clip-path:polygon(0 0,calc(100% - 14px) 0,100% 50%,calc(100% - 14px) 100%,0 100%)}
+.mdiv small{display:block;color:var(--amber);font-family:var(--display);font-weight:400;letter-spacing:1px;text-transform:uppercase;font-size:12px;margin-bottom:3px}
+.mdiv span{overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.mdiv.on{background:var(--amber);color:var(--ink)}.mdiv.on small{color:var(--ink)}
+.chips .none.sm{font-size:14px;padding:0 6px 0 0}
 
 .side{grid-row:1/3;grid-column:2;background:#fff;display:flex;flex-direction:column;min-height:0}
 .panel-h{background:var(--ink);color:var(--amber);font-family:var(--display);letter-spacing:2px;text-transform:uppercase;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;font-size:19px;flex:none}
@@ -153,6 +176,7 @@ img{-webkit-user-drag:none}
   .strip{grid-row:2}
   .strip .lab{width:84px;font-size:14px}
   .chip{width:96px;height:76px}
+  .mdiv{height:76px}
   .side{grid-row:3;grid-column:1}
   .detail .pv{height:clamp(110px,18vh,240px)}
   .tray{grid-template-columns:repeat(5,1fr)}
@@ -213,6 +237,7 @@ img{-webkit-user-drag:none}
 #show .segs{flex:none;display:flex;gap:4px;align-items:center;max-width:42vw;min-width:0}
 #show .seg{flex:0 1 clamp(10px,1.6vw,26px);min-width:3px;height:14px;background:#444;border:0;padding:0;cursor:pointer;clip-path:polygon(5px 0,100% 0,calc(100% - 5px) 100%,0 100%)}
 #show .seg.gap{margin-left:8px}
+#show .seg.mgap{margin-left:4px}
 #show .seg:hover{background:#777}
 #show .seg.on{background:var(--amber)}
 #show .seg.done{background:#8a6a14}
@@ -249,6 +274,12 @@ dialog .note{margin:0;font-size:15px;line-height:1.4;color:#444}
 dialog .err{margin:0;color:#b42318;font-weight:700;font-size:15px}
 dialog .err:empty{display:none}
 dialog .lnk{color:var(--ink);font-weight:700;font-size:14px}
+dialog .copybox{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:14px}
+dialog .q{font-weight:800;font-size:15px;text-transform:uppercase;letter-spacing:.5px}
+dialog .opts{display:flex;gap:8px;flex-wrap:wrap}
+dialog label.opt{flex:1 1 150px;flex-direction:row;align-items:center;gap:10px;border:2px solid var(--line);padding:12px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:16px}
+dialog label.opt:has(input:checked){border-color:var(--amber);background:#fff8e6}
+dialog label.opt input{width:20px;height:20px;padding:0;margin:0;accent-color:var(--ink)}
 .sync{appearance:none;border:0;cursor:pointer;display:flex;align-items:center;gap:8px;background:var(--ink);color:#fff;font:700 13px/1 inherit;letter-spacing:.4px;padding:9px 13px;white-space:nowrap;flex:none}
 .sync i{width:10px;height:10px;border-radius:50%;background:#8a8a8a;flex:none}
 .sync[data-s=ok] i{background:#3fb950}
@@ -277,7 +308,13 @@ dialog .lnk{color:var(--ink);font-weight:700;font-size:14px}
 <main id="editor" class="hide"></main>
 
 <dialog id="dlgPM"><form method="dialog" id="fPM"><div class="panel-h">New Project Manager</div><div class="body"><label>Name<input id="pmName" required maxlength="40" placeholder="e.g. Jordan Smith"></label></div><div class="act"><button type="button" class="btn ghost" data-close>Cancel</button><button class="btn dark" value="ok">Create</button></div></form></dialog>
-<dialog id="dlgMtg"><form method="dialog" id="fMtg"><div class="panel-h">New Meeting Date</div><div class="body"><label>Meeting date<input id="mtDate" type="date" required></label></div><div class="act"><button type="button" class="btn ghost" data-close>Cancel</button><button class="btn dark" value="ok">Create</button></div></form></dialog>
+<dialog id="dlgMtg"><form method="dialog" id="fMtg"><div class="panel-h">New Meeting Date</div><div class="body"><label>Meeting date<input id="mtDate" type="date" required></label>
+  <div class="copybox" id="mtCopyBox">
+    <div class="q">Copy a previous meeting?</div>
+    <div class="opts"><label class="opt"><input type="radio" name="mtCopy" id="mtCopyYes" value="yes" checked>Yes, copy one</label><label class="opt"><input type="radio" name="mtCopy" id="mtCopyNo" value="no">No, start blank</label></div>
+    <label id="mtFromWrap">Copy from<select id="mtFrom"></select></label>
+    <p class="note" id="mtNote">Copies every job in the same order, with its site maps. Photos and markers are not copied, so each job is ready for new pictures. The old meeting is not changed.</p>
+  </div></div><div class="act"><button type="button" class="btn ghost" data-close>Cancel</button><button class="btn dark" value="ok">Create</button></div></form></dialog>
 <dialog id="dlgNew">
   <form method="dialog" id="fNew">
     <div class="panel-h">New Job</div>
@@ -400,7 +437,7 @@ class Scene{
       el.style.transform=`translate(${v.x+p.x*m.w*v.k}px,${v.y+p.y*m.h*v.k}px)`;
       el._sc.style.transform=`scale(${S.size*(S.mult||1)*(sel?1.12:1)})`;
       el._rot.style.transform=`rotate(${p.a}deg)`;
-      el._tx.textContent=i+1;el.dataset.id=p.id;
+      el._tx.textContent=p.n||((S.base||0)+i+1);el.dataset.id=p.id;
       el.classList.toggle('act',act);el.classList.toggle('dim',!!S.dim&&!act);el.classList.toggle('sel',sel);
     });
     for(const [id,el] of this.els)if(!seen.has(id)){el.remove();this.els.delete(id)}
@@ -411,7 +448,11 @@ class Scene{
 /* ================= app state ================= */
 let P=null;                 // current project
 let photos={};              // id -> {id,name,blob,thumb,w,h,src,tsrc}
-let mapObj=null;            // {src,tsrc,w,h}
+let mapObj=null;            // site map on screen {src,tsrc,w,h}
+let mapObjs={};             // every site map of the job: id -> {src,tsrc,w,h}
+let curMap=null;            // id of the site map on screen
+let views={};               // remembered pan/zoom for each site map
+let mapMode='add';          // the map file picker either adds a new map or replaces the one on screen
 let sel=null;               // selected photo id
 let scene=null, view={x:0,y:0,k:1};
 let saveT=null;
@@ -424,6 +465,21 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 window.addEventListener('pagehide',flushSave);
 const pinOf=id=>P.pins.find(p=>p.id===id);
 const nextUnplaced=(after)=>{const ids=P.photoIds;let i=after?ids.indexOf(after):-1;for(let n=1;n<=ids.length;n++){const id=ids[(i+n)%ids.length];if(id&&!pinOf(id))return id}return null};
+/* A job can have several site maps (p.maps, in slideshow order) and each marker remembers its map (pin.m).
+   Older jobs only have p.mapId, so turn that into a one-map list. */
+function normProject(p){
+  if(!Array.isArray(p.maps))p.maps=p.mapId?[{id:p.mapId,name:'Site map',w:p.mapW||0,h:p.mapH||0}]:[];
+  const ids=new Set(p.maps.map(m=>m.id)),first=p.maps[0]&&p.maps[0].id;
+  for(const x of p.pins||[])if(!ids.has(x.m))x.m=first;
+  return p;
+}
+// every site map id of a job (older jobs: just mapId)
+const mapIdsOf=p=>Array.isArray(p.maps)&&p.maps.length?p.maps.map(m=>m.id):(p.mapId?[p.mapId]:[]);
+// the old single-map fields keep pointing at the first map (thumbnails, and devices still on the older app)
+function syncLegacy(p){const f=p.maps[0];p.mapId=f?f.id:null;p.mapW=f?f.w:0;p.mapH=f?f.h:0}
+// the slideshow runs map by map, so markers stay grouped in map order
+function sortPins(){const ix={};P.maps.forEach((m,i)=>ix[m.id]=i);P.pins.sort((a,b)=>(ix[a.m]??0)-(ix[b.m]??0))}
+const mapPins=id=>P.pins.filter(p=>p.m===id);
 
 /* ================= HOME (PMs) → PM (meeting dates) → meeting (jobs) ================= */
 let curPM=null,curMeeting=null,origin=null,curPMName='';
@@ -502,9 +558,9 @@ async function showMeeting(id){
   curMeeting.jobIds=orderedJobIds(curMeeting,projs);
   const rows=[];
   for(const [k,jid] of curMeeting.jobIds.entries()){
-    const p=byId[jid];let thumb='';
-    if(p.mapId){const b=await DB.get('blobs',p.mapId);if(b)thumb=URL.createObjectURL(b.thumb)}
-    rows.push(`<div class="mrow" draggable="true" data-i="${k}" data-id="${jid}"><span class="grip" title="Drag to reorder">&#8942;&#8942;</span><b class="no">${k+1}</b><div class="mth" style="${thumb?`background-image:url(${thumb})`:''}"></div><div class="mi"><h3>${esc(p.name)}</h3><div class="sub">${p.mapId?`${p.pins.length} photo${p.pins.length===1?'':'s'} on the map`:'<b style="color:#b45309">No site map yet — will be skipped</b>'}</div></div><div class="ma"><button data-up title="Move up">&#9650;</button><button data-dn title="Move down">&#9660;</button><button data-open title="Open job">Open</button><button data-rmj title="Delete job">&times;</button></div></div>`);
+    const p=normProject(byId[jid]),nm=p.maps.length;let thumb='';
+    if(nm){const b=await DB.get('blobs',p.maps[0].id);if(b)thumb=URL.createObjectURL(b.thumb)}
+    rows.push(`<div class="mrow" draggable="true" data-i="${k}" data-id="${jid}"><span class="grip" title="Drag to reorder">&#8942;&#8942;</span><b class="no">${k+1}</b><div class="mth" style="${thumb?`background-image:url(${thumb})`:''}"></div><div class="mi"><h3>${esc(p.name)}</h3><div class="sub">${nm?`${p.pins.length} photo${p.pins.length===1?'':'s'} on ${nm>1?`${nm} site maps`:'the map'}`:'<b style="color:#b45309">No site map yet — will be skipped</b>'}</div></div><div class="ma"><button data-up title="Move up">&#9650;</button><button data-dn title="Move down">&#9660;</button><button data-open title="Open job">Open</button><button data-rmj title="Delete job">&times;</button></div></div>`);
   }
   $('#home').innerHTML=`<section class="hero"><p><a href="#" id="bkPM" style="color:var(--amber);font-weight:700">&larr; ${esc(curPM?curPM.name:'Back')}</a></p>
     <h2>Meeting ${esc(numDate(curMeeting.date))}</h2><div class="mdate"><input type="date" id="mDate" value="${esc(curMeeting.date||'')}"> <span>${curMeeting.jobIds.length} job${curMeeting.jobIds.length===1?'':'s'}${expiryOf(curMeeting)?` · auto-deletes ${esc(numDate(expiryOf(curMeeting)))} with its photos`:''}</span></div>
@@ -529,6 +585,28 @@ async function presentIds(ids,date){
 }
 async function deleteProject(id){const bl=await DB.byPid(id);for(const b of bl)await DB.del('blobs',b.id);await DB.del('projects',id)}   // cloud sync also clears this job's cloud photos that never came to this device
 async function deleteMeeting(m){const projs=(await DB.all('projects')).filter(p=>p.meetingId===m.id);for(const p of projs)await deleteProject(p.id);await DB.del('meetings',m.id)}
+/* new meeting from a previous one: same jobs in the same order, each with its own copy of the site maps, no photos */
+async function copyJobs(src,dst){
+  const projs=await DB.all('projects'),byId=Object.fromEntries(projs.map(p=>[p.id,p])),ids=orderedJobIds(src,projs);
+  // site maps that only live in the cloud so far come down first
+  const r=await Sync.ensure(ids.map(id=>byId[id]).filter(Boolean).map(p=>({...p,photoIds:[]})),'Downloading site maps');   // maps only, not last week's photos
+  let missing=0;
+  for(const jid of ids){
+    const s=normProject(byId[jid]),now=Date.now();
+    const np={id:uid(),pmId:dst.pmId,meetingId:dst.id,name:s.name,date:dst.date,maps:[],photoIds:[],pins:[],size:s.size||1,created:now,updated:now};
+    for(const m of s.maps){
+      const b=await DB.get('blobs',m.id);if(!b){missing++;continue}
+      const id='map-'+uid();
+      await DB.put('blobs',{id,pid:np.id,kind:'map',name:b.name,blob:b.blob,thumb:b.thumb,w:b.w,h:b.h});
+      np.maps.push({id,name:m.name,w:b.w,h:b.h});
+    }
+    syncLegacy(np);await DB.put('projects',np);dst.jobIds.push(np.id);
+  }
+  dst.updated=Date.now();await DB.put('meetings',dst);
+  return{n:dst.jobIds.length,missing:r.missing?missing:0};
+}
+function mtCopyToggle(){const y=$('#mtCopyYes').checked;$('#mtFromWrap').classList.toggle('hide',!y);$('#mtNote').classList.toggle('hide',!y)}
+$('#fMtg').addEventListener('change',e=>{if(e.target.name==='mtCopy')mtCopyToggle()});
 
 /* ================= 2-week cleanup =================
    A meeting date, with its jobs, site maps and photos, is deleted 14 days after the meeting date,
@@ -583,7 +661,12 @@ $('#home').addEventListener('click',async e=>{
     if(confirm(`Delete meeting ${numDate(m.date)}${n?` and its ${n} job${n===1?'':'s'} with all photos`:''}? This can't be undone.`)){await deleteMeeting(m);showPM(curPM.id)}return}
   const pres=t.closest('[data-pres]');
   if(pres){const m=await DB.get('meetings',pres.dataset.pres);return presentIds(await idsForMeeting(m),m.date)}
-  if(t.closest('#cNewMtg')){if(!curPM)return;$('#mtDate').value=new Date().toISOString().slice(0,10);$('#dlgMtg').showModal();return}
+  if(t.closest('#cNewMtg')){
+    if(!curPM)return;
+    const mtgs=(await DB.all('meetings')).filter(m=>m.pmId===curPM.id).sort((a,b)=>(b.date||'').localeCompare(a.date||'')),projs=await DB.all('projects');
+    $('#mtFrom').innerHTML=mtgs.map(m=>{const n=orderedJobIds(m,projs).length;return`<option value="${m.id}">Meeting ${esc(numDate(m.date))} — ${n} job${n===1?'':'s'}</option>`}).join('');
+    $('#mtCopyBox').classList.toggle('hide',!mtgs.length);$('#mtCopyYes').checked=true;mtCopyToggle();
+    $('#mtDate').value=dayKey(new Date());$('#dlgMtg').showModal();return}
   if(t.closest('#cNew')){
     if(!curPM)return;
     const mtgs=(await DB.all('meetings')).filter(m=>m.pmId===curPM.id).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
@@ -623,12 +706,22 @@ $('#fMtg').addEventListener('submit',async e=>{
   const ex=(await DB.all('meetings')).find(m=>m.pmId===curPM.id&&m.date===date);
   if(ex){toast('That meeting date already exists — opened it');return showMeeting(ex.id)}
   const m={id:uid(),pmId:curPM.id,date,jobIds:[],created:Date.now(),updated:Date.now()};
-  await DB.put('meetings',m);showMeeting(m.id);
+  await DB.put('meetings',m);
+  if(!$('#mtCopyBox').classList.contains('hide')&&$('#mtCopyYes').checked){
+    const src=await DB.get('meetings',$('#mtFrom').value);
+    if(src){
+      toast('Copying jobs and site maps…',60000);
+      try{const r=await copyJobs(src,m);document.querySelectorAll('.toast').forEach(x=>x.remove());
+        toast(`Copied ${r.n} job${r.n===1?'':'s'} from meeting ${numDate(src.date)} — ready for new photos`+(r.missing?`. ${r.missing} site map${r.missing===1?' was':'s were'} not on this device yet and could not be copied (no connection?)`:''),r.missing?8000:4500)}
+      catch(err){console.error(err);document.querySelectorAll('.toast').forEach(x=>x.remove());toast('Could not copy every job — browser storage may be full',6000)}
+    }
+  }
+  showMeeting(m.id);
 });
 $('#fNew').addEventListener('submit',async e=>{
   if(e.submitter&&e.submitter.value!=='ok')return;
   const m=await DB.get('meetings',$('#nMeet').value);if(!m)return;
-  const p={id:uid(),pmId:m.pmId,meetingId:m.id,name:$('#nName').value.trim()||'Untitled Job',date:m.date,mapId:null,mapW:0,mapH:0,photoIds:[],pins:[],size:1,created:Date.now(),updated:Date.now()};
+  const p={id:uid(),pmId:m.pmId,meetingId:m.id,name:$('#nName').value.trim()||'Untitled Job',date:m.date,mapId:null,mapW:0,mapH:0,maps:[],photoIds:[],pins:[],size:1,created:Date.now(),updated:Date.now()};
   await DB.put('projects',p);m.jobIds=orderedJobIds(m,await DB.all('projects'));await DB.put('meetings',m);
   origin={t:'mtg',id:m.id};openProject(p.id);
 });
@@ -677,13 +770,17 @@ async function openProject(id){
     }
     p=await DB.get('projects',id);if(!p)return showHome();          // pick up any change that synced in while downloading
     const pm=await DB.get('pms',p.pmId),bl=await DB.byPid(id);
+    const keepMap=P&&P.id===id?curMap:null;                          // re-opened after a sync: stay on the same site map
     // everything is loaded; switch to the job in one step so nothing can interleave
-    P=p;curPMName=pm?pm.name:'';photos={};mapObj=null;sel=null;
+    P=normProject(p);curPMName=pm?pm.name:'';photos={};mapObjs={};mapObj=null;curMap=null;views={};sel=null;
+    const mids=new Set(P.maps.map(m=>m.id));
     for(const b of bl){
-      if(b.id===P.mapId)mapObj={src:URL.createObjectURL(b.blob),tsrc:URL.createObjectURL(b.thumb),w:b.w,h:b.h};
-      else photos[b.id]={...b,src:URL.createObjectURL(b.blob),tsrc:URL.createObjectURL(b.thumb)};
+      if(mids.has(b.id))mapObjs[b.id]={src:URL.createObjectURL(b.blob),tsrc:URL.createObjectURL(b.thumb),w:b.w,h:b.h};
+      else if(b.kind!=='map')photos[b.id]={...b,src:URL.createObjectURL(b.blob),tsrc:URL.createObjectURL(b.thumb)};
     }
-    P.photoIds=P.photoIds.filter(i=>photos[i]);P.pins=P.pins.filter(p=>photos[p.id]);
+    P.maps=P.maps.filter(m=>mapObjs[m.id]);
+    P.photoIds=P.photoIds.filter(i=>photos[i]);P.pins=P.pins.filter(p=>photos[p.id]&&mapObjs[p.m]);sortPins();
+    if(P.maps.length){curMap=mapObjs[keepMap]?keepMap:P.maps[0].id;mapObj=mapObjs[curMap]}
     sel=nextUnplaced()||(P.pins[0]&&P.pins[0].id)||null;
     buildEditor();
   }finally{if(opening===id)opening=null}
@@ -694,10 +791,14 @@ function buildEditor(){
   <div class="stage" id="stage">
     <svg id="msvg"></svg>
     <div class="empty" id="empty"><h3>Drop your site map here</h3><p>A drone overhead or a site drawing. JPG or PNG.</p><button class="btn dark" id="bPickMap">Choose image</button></div>
-    <div class="mtools" id="mtools">
-      <div class="grp"><button id="zIn" title="Zoom in">+</button><button id="zOut" title="Zoom out">&minus;</button><button id="zFit" title="Fit map" style="font-size:14px;width:48px">FIT</button></div>
-      <label>Marker size <input type="range" id="szr" min="0.5" max="2.5" step="0.1"></label>
-      <button class="btn sm ghost" id="bRepl">Replace map</button>
+    <div class="mtop" id="mtop">
+      <div class="mtabs hide" id="mtabs"></div>
+      <div class="mtools" id="mtools">
+        <div class="grp"><button id="zIn" title="Zoom in">+</button><button id="zOut" title="Zoom out">&minus;</button><button id="zFit" title="Fit map" style="font-size:14px;width:48px">FIT</button></div>
+        <label>Marker size <input type="range" id="szr" min="0.5" max="2.5" step="0.1"></label>
+        <button class="btn sm ghost" id="bRepl" title="Swap in a new image for the map on screen. Markers stay put.">Replace map</button>
+        <button class="btn sm dark" id="bAddMap" title="Add another site map, e.g. a building floor plan">+ Add site map</button>
+      </div>
     </div>
     <div class="hint" id="hint"></div>
   </div>
@@ -715,21 +816,63 @@ function buildEditor(){
 }
 function refreshAll(){
   const has=!!mapObj;
-  $('#empty').classList.toggle('hide',has);$('#mtools').classList.toggle('hide',!has);
+  $('#empty').classList.toggle('hide',has);$('#mtop').classList.toggle('hide',!has);
   $('#bPresent').disabled=!has;$('#bExport').disabled=!has;
-  refreshMap();refreshTray();refreshStrip();refreshDetail();refreshHint();
+  refreshTabs();refreshMap();refreshTray();refreshStrip();refreshDetail();refreshHint();
 }
 function refreshMap(){
   if(!mapObj||!scene||!P)return;
-  scene.draw({view,pins:P.pins,sel,edit:true,size:P.size||1,mult:1,dim:false});
+  // only this map's markers; numbers continue across maps (map 2 starts after map 1's last photo)
+  scene.draw({view,pins:mapPins(curMap),base:Math.max(0,P.pins.findIndex(p=>p.m===curMap)),sel,edit:true,size:P.size||1,mult:1,dim:false});
   $('#msvg').classList.toggle('armed',!!sel&&!pinOf(sel));
+}
+function refreshTabs(){
+  const t=$('#mtabs');if(!t)return;
+  const multi=P.maps.length>1;t.classList.toggle('hide',!multi);
+  if(!multi){t.innerHTML='';return}
+  t.innerHTML=P.maps.map((m,g)=>{const n=mapPins(m.id).length,on=m.id===curMap;
+    return`<button class="mtab${on?' on':''}" data-map="${m.id}" title="${on?'Map options: rename, reorder, remove':'Switch to this site map'}"><b>${g+1}</b><span>${esc(m.name)}</span><small>(${n})</small>${on?'<i>&#9662;</i>':''}</button>`}).join('');
+}
+/* show another of the job's site maps; new markers go on the map on screen */
+function switchMap(id){
+  if(!mapObjs[id]||!scene)return;
+  closeMapMenu();
+  if(curMap&&curMap!==id)views[curMap]=view;
+  curMap=id;mapObj=mapObjs[id];scene.setMap(mapObj);
+  view=views[id]||scene.fit();
+  refreshAll();
+}
+function closeMapMenu(){const m=$('#mmenu');if(m)m.remove()}
+function openMapMenu(tab){
+  closeMapMenu();const g=P.maps.findIndex(m=>m.id===curMap),st=$('#stage');
+  const mm=document.createElement('div');mm.className='mmenu';mm.id='mmenu';
+  mm.innerHTML=`<button data-mm="ren">Rename this map</button><button data-mm="up"${g<=0?' disabled':''}>&#9664; Show earlier in slideshow</button><button data-mm="dn"${g>=P.maps.length-1?' disabled':''}>Show later in slideshow &#9654;</button><button data-mm="del" class="danger">Remove this map</button>`;
+  const r=tab.getBoundingClientRect(),s=st.getBoundingClientRect();
+  mm.style.left=Math.max(8,Math.min(r.left-s.left,s.width-240))+'px';mm.style.top=(r.bottom-s.top+6)+'px';
+  st.appendChild(mm);
+}
+function mapMenuAction(a){
+  const g=P.maps.findIndex(m=>m.id===curMap),m=P.maps[g];closeMapMenu();if(!m)return;
+  if(a==='ren'){const nn=prompt('Name this site map',m.name);if(nn&&nn.trim()){m.name=nn.trim().slice(0,40);save();refreshAll()}return}
+  if(a==='up'||a==='dn'){const h=g+(a==='dn'?1:-1);if(h<0||h>=P.maps.length)return;[P.maps[g],P.maps[h]]=[P.maps[h],P.maps[g]];sortPins();syncLegacy(P);save();refreshAll();return}
+  if(a==='del')return removeMap(m.id);
+}
+async function removeMap(id){
+  const m=P.maps.find(x=>x.id===id);if(!m||P.maps.length<2)return;
+  const n=mapPins(id).length;
+  if(!confirm(`Remove the site map "${m.name}"?${n?` Its ${n} marker${n===1?'':'s'} will be removed too. The photos stay in this job.`:''}`))return;
+  const g=P.maps.indexOf(m);
+  P.pins=P.pins.filter(p=>p.m!==id);P.maps.splice(g,1);
+  const o=mapObjs[id];if(o){URL.revokeObjectURL(o.src);URL.revokeObjectURL(o.tsrc)}delete mapObjs[id];delete views[id];
+  syncLegacy(P);save();flushSave();await DB.del('blobs',id);   // the job stops using the map before the map itself goes
+  curMap=null;switchMap(P.maps[Math.max(0,g-1)].id);
 }
 function refreshHint(){
   const h=$('#hint');if(!h||!P)return;
   if(!mapObj){h.classList.add('hide');return}
   h.classList.remove('hide');
   if(!P.photoIds.length)h.innerHTML='Now <b>add your photos</b> in the panel';
-  else if(sel&&!pinOf(sel)){h.innerHTML=`Tap the map where photo <b>${P.photoIds.indexOf(sel)+1}</b> was taken &mdash; <b>drag</b> to aim the view`}
+  else if(sel&&!pinOf(sel)){const cm=P.maps.length>1&&P.maps.find(m=>m.id===curMap);h.innerHTML=`Tap ${cm?`<b>${esc(cm.name)}</b>`:'the map'} where photo <b>${P.photoIds.indexOf(sel)+1}</b> was taken &mdash; <b>drag</b> to aim the view`}
   else if(sel)h.innerHTML='Drag the number to move it &middot; drag the white dot to aim';
   else if(P.pins.length===P.photoIds.length)h.innerHTML='All photos placed &mdash; tap <b>Present</b>';
   else h.innerHTML='Pick a photo, then tap the map';
@@ -744,17 +887,26 @@ function refreshTray(){
 }
 function refreshStrip(){
   const c=$('#chips');if(!c)return;
+  const chip=(p,i)=>`<div class="chip${p.id===sel?' sel':''}" draggable="true" data-i="${i}" data-id="${p.id}" style="background-image:url(${photos[p.id].tsrc})"><i>${i+1}</i></div>`;
+  if(P.maps.length>1){ // a divider for each map, then the photos placed on it
+    c.innerHTML=P.maps.map((m,g)=>{const own=P.pins.map((p,i)=>p.m===m.id?chip(p,i):'').join('');
+      return`<div class="mdiv${m.id===curMap?' on':''}" data-map="${m.id}" title="The slideshow switches to this map here"><small>Map ${g+1}</small><span>${esc(m.name)}</span></div>${own||'<div class="none sm">no photos yet</div>'}`}).join('');
+    return;
+  }
   if(!P.pins.length){c.innerHTML='<div class="none">Placed photos appear here in presentation order.</div>';return}
-  c.innerHTML=P.pins.map((p,i)=>`<div class="chip${p.id===sel?' sel':''}" draggable="true" data-i="${i}" data-id="${p.id}" style="background-image:url(${photos[p.id].tsrc})"><i>${i+1}</i></div>`).join('');
+  c.innerHTML=P.pins.map(chip).join('');
 }
 function refreshDetail(){
   const d=$('#detail');if(!d)return;
   if(!sel||!photos[sel]){d.innerHTML='<div class="nm" style="font-size:15px">Select a photo to place it on the map.</div>';return}
-  const ph=photos[sel],pin=pinOf(sel);
+  const ph=photos[sel],pin=pinOf(sel),i=pin?P.pins.indexOf(pin):-1;
+  // Earlier / Later only move a photo within its own site map
+  const first=i<=0||P.pins[i-1].m!==pin.m,last=i<0||i===P.pins.length-1||P.pins[i+1].m!==pin.m;
+  const onMap=pin&&P.maps.length>1?(P.maps.find(m=>m.id===pin.m)||{}).name:'';
   d.innerHTML=`<div class="pv" style="background-image:url(${ph.src})"></div>
-  <div class="nm">${esc(ph.name)}${pin?` &middot; photo ${P.pins.indexOf(pin)+1} of ${P.pins.length} in the slideshow`:' &middot; not placed yet'}</div>
+  <div class="nm">${esc(ph.name)}${pin?` &middot; photo ${i+1} of ${P.pins.length} in the slideshow${onMap?` &middot; on ${esc(onMap)}`:''}`:' &middot; not placed yet'}</div>
   <input type="text" id="cap" placeholder="Caption (shown on the slide)" maxlength="120" value="${esc(pin?pin.cap:(ph.cap||''))}">
-  <div class="row">${pin?`<button class="btn sm ghost" id="mvL" title="Show earlier in the slideshow">&#9664; Earlier</button><button class="btn sm ghost" id="mvR" title="Show later in the slideshow">Later &#9654;</button><button class="btn sm ghost" id="rotL" title="Rotate left">&#8634; 15&deg;</button><button class="btn sm ghost" id="rotR" title="Rotate right">&#8635; 15&deg;</button><button class="btn sm ghost" id="rmPin">Remove marker</button>`:''}<button class="btn sm ghost" id="rmPhoto">Delete photo</button></div>`;
+  <div class="row">${pin?`<button class="btn sm ghost" id="mvL" title="Show earlier in the slideshow"${first?' disabled':''}>&#9664; Earlier</button><button class="btn sm ghost" id="mvR" title="Show later in the slideshow"${last?' disabled':''}>Later &#9654;</button><button class="btn sm ghost" id="rotL" title="Rotate left">&#8634; 15&deg;</button><button class="btn sm ghost" id="rotR" title="Rotate right">&#8635; 15&deg;</button><button class="btn sm ghost" id="rmPin">Remove marker</button>`:''}<button class="btn sm ghost" id="rmPhoto">Delete photo</button></div>`;
 }
 $('#editor').addEventListener('input',e=>{
   if(e.target.id==='cap'&&sel){const pin=pinOf(sel);if(pin){pin.cap=e.target.value}else photos[sel].cap=e.target.value;save()}
@@ -763,13 +915,17 @@ $('#editor').addEventListener('input',e=>{
 $('#editor').addEventListener('change',e=>{if(e.target.id==='onlyUn')refreshTray()});
 $('#editor').addEventListener('click',async e=>{
   const id=e.target.id;
-  if(id==='bPickMap'||id==='bRepl')return $('#fileMap').click();
+  const mm=e.target.closest('[data-mm]');if(mm)return mapMenuAction(mm.dataset.mm);
+  const tab=e.target.closest('.mtab');if(tab){if(tab.dataset.map===curMap){if($('#mmenu'))closeMapMenu();else openMapMenu(tab)}else switchMap(tab.dataset.map);return}
+  const md=e.target.closest('.mdiv');if(md)return switchMap(md.dataset.map);
+  if(id==='bPickMap'||id==='bAddMap'){mapMode='add';return $('#fileMap').click()}
+  if(id==='bRepl'){mapMode='replace';return $('#fileMap').click()}
   if(id==='bAddP')return $('#filePhotos').click();
   if(id==='bAddF')return $('#fileFolder').click();
   if(id==='zIn')return zoomBy(1.4);if(id==='zOut')return zoomBy(1/1.4);
   if(id==='zFit'){view=scene.fit();return refreshMap()}
   if(id==='rotL'||id==='rotR'){const p=pinOf(sel);p.a=((p.a+(id==='rotR'?15:-15))%360+360)%360;refreshMap();save();return}
-  if(id==='mvL'||id==='mvR'){const p=pinOf(sel),i=P.pins.indexOf(p),j=i+(id==='mvR'?1:-1);if(j>=0&&j<P.pins.length){[P.pins[i],P.pins[j]]=[P.pins[j],P.pins[i]];save();refreshAll()}return}
+  if(id==='mvL'||id==='mvR'){const p=pinOf(sel),i=P.pins.indexOf(p),j=i+(id==='mvR'?1:-1);if(j>=0&&j<P.pins.length&&P.pins[j].m===p.m){[P.pins[i],P.pins[j]]=[P.pins[j],P.pins[i]];save();refreshAll()}return}
   if(id==='rmPin')return removePin(sel);
   if(id==='rmPhoto')return removePhoto(sel);
   if(e.target.closest('.pv')&&sel&&photos[sel]){
@@ -784,6 +940,7 @@ $('#editor').addEventListener('click',async e=>{
 function selectPhoto(id){
   sel=id;
   const pin=pinOf(id);
+  if(pin&&pin.m!==curMap)switchMap(pin.m); // a photo placed on another site map: show that map
   if(pin&&mapObj){ // bring pin into view if off-screen
     const w=scene.svg.clientWidth,h=scene.svg.clientHeight,sx=view.x+pin.x*mapObj.w*view.k,sy=view.y+pin.y*mapObj.h*view.k;
     if(sx<40||sy<40||sx>w-40||sy>h-40){view.x+=w/2-sx;view.y+=h/2-sy}
@@ -800,7 +957,7 @@ async function removePhoto(id){
 document.addEventListener('keydown',e=>{
   if(!P||$('#show')||e.target.matches('input,textarea,select'))return;
   if((e.key==='Delete'||e.key==='Backspace')&&sel&&pinOf(sel)){e.preventDefault();removePin(sel)}
-  if(e.key==='Escape'){sel=null;refreshAll()}
+  if(e.key==='Escape'){closeMapMenu();sel=null;refreshAll()}
 });
 $('#pname').addEventListener('input',e=>{if(P){P.name=e.target.value;save()}});
 /* Enter = save and move on. Dialog Cancel buttons are type=button, so Enter in a dialog now presses Create. */
@@ -846,7 +1003,7 @@ document.addEventListener('pointerdown',e=>{
   if(e.button!==0)return;
   if(mk&&e.target.classList.contains('handle')){const pin=pinOf(mk.dataset.id);drag={t:'rot',pin};return}
   if(mk){const pin=pinOf(mk.dataset.id);const ps=pinScreen(pin);sel=pin.id;drag={t:'move',pin,dx:ps.x-sx,dy:ps.y-sy,moved:false};refreshAll();return}
-  if(sel&&!pinOf(sel)){const n=toNorm(sx,sy);const pin={id:sel,x:n.x,y:n.y,a:0,cap:photos[sel].cap||''};P.pins.push(pin);drag={t:'rot',pin,fresh:true,ox:sx,oy:sy,moved:false};refreshMap();return}
+  if(sel&&!pinOf(sel)){const n=toNorm(sx,sy);const pin={id:sel,m:curMap,x:n.x,y:n.y,a:0,cap:photos[sel].cap||''};P.pins.push(pin);sortPins();drag={t:'rot',pin,fresh:true,ox:sx,oy:sy,moved:false};refreshMap();return}
   drag={t:'pan',sx,sy,vx:view.x,vy:view.y,click:true};svg.classList.add('panning');
 });
 document.addEventListener('pointermove',e=>{
@@ -872,6 +1029,8 @@ function endPointer(e){
   if(d.fresh){const nx=nextUnplaced(d.pin.id);sel=nx&&nx!==d.pin.id?nx:d.pin.id}
   refreshAll();
 }
+// tapping anywhere outside the map menu closes it
+document.addEventListener('pointerdown',e=>{if($('#mmenu')&&!(e.target.closest&&e.target.closest('#mmenu,.mtab.on')))closeMapMenu()},true);
 document.addEventListener('pointerup',endPointer);
 document.addEventListener('pointercancel',endPointer);
 document.addEventListener('contextmenu',e=>{if(e.target.closest&&e.target.closest('#msvg'))e.preventDefault()});
@@ -883,7 +1042,9 @@ document.addEventListener('dragstart',e=>{const c=e.target.closest&&e.target.clo
 document.addEventListener('dragover',e=>{const c=e.target.closest&&e.target.closest('.chip');if(c&&dragI!==null){e.preventDefault();document.querySelectorAll('.chip.dragover').forEach(x=>x.classList.remove('dragover'));c.classList.add('dragover')}});
 document.addEventListener('drop',e=>{
   const c=e.target.closest&&e.target.closest('.chip');
-  if(c&&dragI!==null){e.preventDefault();const to=+c.dataset.i;if(to!==dragI){const [m]=P.pins.splice(dragI,1);P.pins.splice(to,0,m);save();refreshAll()}}
+  if(c&&dragI!==null){e.preventDefault();const to=+c.dataset.i;if(to!==dragI){
+    if(P.pins[to].m!==P.pins[dragI].m)toast('Photos can only be reordered within their own site map. To move one to another map, remove its marker and place it on that map.',5500);
+    else{const [m]=P.pins.splice(dragI,1);P.pins.splice(to,0,m);save();refreshAll()}}}
   dragI=null;document.querySelectorAll('.chip.dragover').forEach(x=>x.classList.remove('dragover'));
 });
 document.addEventListener('dragend',()=>{dragI=null;document.querySelectorAll('.chip.dragover').forEach(x=>x.classList.remove('dragover'))});
@@ -1009,18 +1170,30 @@ async function expandBundles(files){
 }
 
 /* ---- file intake ---- */
-async function setMap(file){
+/* add: a new site map for this job (e.g. a building floor plan). Otherwise: new image for the map on screen. */
+async function setMap(file,add){
   if(!isImg(file))return toast('That file is not an image');
+  add=add||!curMap;
+  const job=P;
   toast('Loading map…',1500);
   try{
     const r=await processImage(file,6000,.93,640);
-    const id=P.mapId||('map-'+P.id);
+    if(P!==job)return;                                               // the job was left while the image loaded
+    const id=add?'map-'+uid():curMap;
     await DB.put('blobs',{id,pid:P.id,kind:'map',name:file.name,blob:r.blob,thumb:r.thumb,w:r.w,h:r.h});
-    P.mapId=id;P.mapW=r.w;P.mapH=r.h;
-    if(mapObj){URL.revokeObjectURL(mapObj.src);URL.revokeObjectURL(mapObj.tsrc)}
-    mapObj={src:URL.createObjectURL(r.blob),tsrc:URL.createObjectURL(r.thumb),w:r.w,h:r.h};
-    scene.setMap(mapObj);P.updated=Date.now();save();
-    refreshAll();requestAnimationFrame(()=>{view=scene.fit();refreshMap()});
+    const old=mapObjs[id];if(old){URL.revokeObjectURL(old.src);URL.revokeObjectURL(old.tsrc)}
+    mapObjs[id]={src:URL.createObjectURL(r.blob),tsrc:URL.createObjectURL(r.thumb),w:r.w,h:r.h};
+    let m=P.maps.find(x=>x.id===id);
+    if(m){m.w=r.w;m.h=r.h}
+    else{
+      let name=P.maps.length?`Map ${P.maps.length+1}`:'Site map';
+      if(P.maps.length){const nn=prompt('Name this site map (for example "Building A interior")',name);if(nn&&nn.trim())name=nn.trim().slice(0,40)}
+      m={id,name,w:r.w,h:r.h};P.maps.push(m);
+    }
+    syncLegacy(P);save();
+    if(curMap&&curMap!==id)views[curMap]=view;
+    delete views[id];curMap=null;switchMap(id);
+    if(add&&P.maps.length>1)toast(`Added "${m.name}" — photos you place now go on this map`,4000);
   }catch(err){console.error(err);toast('Could not read that map image (try JPG or PNG)')}
 }
 async function addPhotos(files){
@@ -1044,7 +1217,7 @@ async function addPhotos(files){
   if(first&&(!sel||pinOf(sel)))sel=first;
   P.updated=Date.now();save();refreshAll();
 }
-$('#fileMap').addEventListener('change',e=>{if(e.target.files[0])setMap(e.target.files[0]);e.target.value=''});
+$('#fileMap').addEventListener('change',e=>{if(e.target.files[0])setMap(e.target.files[0],mapMode==='add');e.target.value=''});
 $('#filePhotos').addEventListener('change',e=>{addPhotos(e.target.files);e.target.value=''});
 $('#fileFolder').addEventListener('change',e=>{addPhotos(e.target.files);e.target.value=''});
 async function readEntry(en,out){
@@ -1075,53 +1248,73 @@ document.addEventListener('drop',async e=>{
   if(!imgs.length)return toast(files.length?'Could not use that file ('+(files[0].name||'unnamed')+') — it does not look like an image, ZIP or PDF':'The browser did not hand over a file. Drag it from a Windows folder, or use Add photos',7000);
   if(imgs.some(isBundle))return addPhotos(imgs);     // a Procore ZIP or PDF always adds photos, even when dropped on the map
   if(st){
-    if(!mapObj||confirm('Replace the site map with this image? Your markers stay where they are.'))setMap(imgs[0]);
+    const cm=P.maps.length>1&&P.maps.find(m=>m.id===curMap);
+    if(!mapObj||confirm(`Replace ${cm?`the site map "${cm.name}"`:'the site map'} with this image? Your markers stay where they are. (To add another map instead, use + Add site map.)`))setMap(imgs[0],!mapObj);
   }else addPhotos(imgs);
 });
 
 /* ================= PRESENTATION ================= */
 const dataURL=async u=>blobToDataURL(await(await fetch(u)).blob());
-function buildShowData(){
-  return{name:P.name,pm:curPMName,date:P.date,size:P.size||1,map:{src:mapObj.src,w:mapObj.w,h:mapObj.h},
-    pins:P.pins.map(p=>({id:p.id,x:p.x,y:p.y,a:p.a,cap:p.cap||'',name:photos[p.id].name,src:photos[p.id].src,tsrc:photos[p.id].tsrc}))};
+/* slideshow data for one job: its site maps in order, each with the photos placed on it.
+   Photo numbers (n) run on across maps. Extra maps with no photos placed are left out. */
+function jobShowData(p,maps,pics,pm){
+  const out=[];let n=0;
+  for(const m of p.maps){
+    const mo=maps[m.id];if(!mo)continue;
+    const pins=p.pins.filter(x=>x.m===m.id&&pics[x.id]).map(x=>({id:x.id,x:x.x,y:x.y,a:x.a,cap:x.cap||'',name:pics[x.id].name,src:pics[x.id].src,tsrc:pics[x.id].tsrc}));
+    if(out.length&&!pins.length)continue;
+    pins.forEach(q=>q.n=++n);
+    out.push({name:m.name||'',src:mo.src,w:mo.w,h:mo.h,pins});
+  }
+  return out.length?{name:p.name,pm,date:p.date,size:p.size||1,maps:out}:null;
 }
+function buildShowData(){return jobShowData(P,mapObjs,photos,curPMName)}
 async function showDataFor(pid){
   if(P&&P.id===pid&&mapObj)return buildShowData();
-  const p=await DB.get('projects',pid);if(!p||!p.mapId)return null;
-  const byId={};let m=null;
-  for(const b of await DB.byPid(pid)){if(b.id===p.mapId)m=b;else byId[b.id]=b}
-  if(!m)return null;
+  const p=await DB.get('projects',pid);if(!p)return null;normProject(p);if(!p.maps.length)return null;
+  const mids=new Set(p.maps.map(m=>m.id)),pids=new Set(p.pins.map(x=>x.id)),maps={},pics={};
+  for(const b of await DB.byPid(pid)){
+    if(mids.has(b.id))maps[b.id]={src:URL.createObjectURL(b.blob),w:b.w,h:b.h};
+    else if(pids.has(b.id))pics[b.id]={name:b.name,src:URL.createObjectURL(b.blob),tsrc:URL.createObjectURL(b.thumb)};
+  }
   const pm=await DB.get('pms',p.pmId);
-  const pins=p.pins.filter(x=>byId[x.id]).map(x=>({id:x.id,x:x.x,y:x.y,a:x.a,cap:x.cap||'',name:byId[x.id].name,src:URL.createObjectURL(byId[x.id].blob),tsrc:URL.createObjectURL(byId[x.id].thumb)}));
-  return{name:p.name,pm:pm?pm.name:'',date:p.date,size:p.size||1,map:{src:URL.createObjectURL(m.blob),w:m.w,h:m.h},pins};
+  return jobShowData(p,maps,pics,pm?pm.name:'');
 }
 function startShow(Ds,opts={}){
+  // slideshow files saved by the older version have one map per job: treat it as a one-map list
+  Ds=Ds.map(D=>D.maps?D:{...D,maps:[{...D.map,name:'',pins:D.pins.map((p,k)=>({...p,n:k+1}))}]});
   const embedded=!!opts.embedded,multi=Ds.length>1;
-  const S=[];Ds.forEach((D,j)=>{S.push({j,i:0});D.pins.forEach((_,k)=>S.push({j,i:k+1}))});
+  // one slide per map overview, then one per photo on that map
+  const S=[];Ds.forEach((D,j)=>D.maps.forEach((M,g)=>{S.push({j,g,i:0});M.pins.forEach((p,k)=>S.push({j,g,i:k+1,n:p.n}))}));
+  const total=D=>D.maps.reduce((s,M)=>s+M.pins.length,0);
   const el=document.createElement('div');el.id='show';el.className='anim';
   el.innerHTML=`<div class="s-head"><div class="s-logo">${LOGO_HTML}</div><div class="s-title" id="sTitle"></div><div class="s-date" id="sSub"></div><div class="grow"></div>${multi?'<span class="s-job" id="sJob"></span>':''}<span class="tag dark" id="sTag"></span></div>
   <div class="s-main" id="sMain"><div class="s-map"><svg id="sSvg"></svg></div><div class="s-side" id="sSide"></div></div>
   <div class="s-foot"><div class="s-cap" id="sCap"></div><div class="tools"><button data-a="zoom" title="Zoom map to marker (Z)">Zoom</button><button data-a="layout" title="Change layout (V)">Layout</button>${IS_IOS?'':'<button data-a="full" title="Fullscreen (F)">&#9974;</button>'}${embedded?'':'<button data-a="exit" title="Exit (Esc)">Exit</button>'}</div><div class="segs" id="segs"></div><div class="nav"><button data-a="prev" title="Previous (←)">&#9664;</button><button data-a="next" title="Next (→)">&#9654;</button></div></div>`;
   document.body.appendChild(el);
   const sc=new Scene($('#sSvg',el));
-  let c=0,layout='auto',zoom=0,curJ=-1;const ZOOMS=[0,2.5,5];
+  let c=0,layout='auto',zoom=0,curJ=-1,curKey='';const ZOOMS=[0,2.5,5];
   const segs=$('#segs',el);
-  segs.innerHTML=S.map((s,k)=>`<button class="seg${s.i===0&&s.j>0?' gap':''}" data-i="${k}" title="${esc(Ds[s.j].name)} — ${s.i?'Photo '+s.i:'Overview'}"></button>`).join('');
+  const mapName=(D,g)=>D.maps[g].name||('Site map '+(g+1));
+  segs.innerHTML=S.map((s,k)=>{const D=Ds[s.j];return`<button class="seg${s.i===0&&s.g===0&&s.j>0?' gap':''}${s.i===0&&s.g>0?' mgap':''}" data-i="${k}" title="${esc(D.name)} — ${s.i?'Photo '+s.n:(D.maps.length>1?esc(mapName(D,s.g)):'Overview')}"></button>`}).join('');
   const jobStart=j=>S.findIndex(s=>s.j===j&&s.i===0);
   const layoutClass=()=>layout==='auto'?(S[c].i===0?'overview':'split'):layout;
   function draw(){
-    const{j,i}=S[c],D=Ds[j];
+    const{j,g,i}=S[c],D=Ds[j],M=D.maps[g];
     const w=sc.svg.clientWidth,h=sc.svg.clientHeight;if(!w||!h)return;
     const f=sc.fit(.94);let v=f;
-    if(i>0&&zoom){const p=D.pins[i-1],k=f.k*ZOOMS[zoom];v={k,x:w/2-p.x*D.map.w*k,y:h/2-p.y*D.map.h*k}}
+    if(i>0&&zoom){const p=M.pins[i-1],k=f.k*ZOOMS[zoom];v={k,x:w/2-p.x*M.w*k,y:h/2-p.y*M.h*k}}
     const mult=Math.max(.9,Math.min(1.6,w/560))*(i===0?.85:1);
-    sc.draw({view:v,pins:D.pins,activeId:i>0?D.pins[i-1].id:null,size:D.size,mult,dim:i>0,edit:false});
+    sc.draw({view:v,pins:M.pins,activeId:i>0?M.pins[i-1].id:null,size:D.size,mult,dim:i>0,edit:false});
   }
   function render(){
-    const{j,i}=S[c],D=Ds[j],n=D.pins.length;
-    if(j!==curJ){
-      curJ=j;sc.setMap(D.map);
+    const{j,g,i}=S[c],D=Ds[j],M=D.maps[g],n=M.pins.length,G=D.maps.length;
+    if(j+':'+g!==curKey){ // new job or the next site map of this job
+      curKey=j+':'+g;sc.setMap(M);
       el.classList.add('noanim');requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.remove('noanim')));
+    }
+    if(j!==curJ){
+      curJ=j;
       $('#sTitle',el).textContent=D.name;
       $('#sSub',el).textContent=[D.pm,fmtDate(opts.date||D.date)].filter(Boolean).join(' · ');
       if(multi)$('#sJob',el).textContent=`Job ${j+1} of ${Ds.length}`;
@@ -1129,41 +1322,44 @@ function startShow(Ds,opts={}){
     $('#sMain',el).className='s-main '+layoutClass();
     const side=$('#sSide',el);
     if(i===0){
-      side.innerHTML=`<div class="legend"><h4>Photo locations</h4>${n?`<ol>${D.pins.map((p,k)=>`<li data-i="${k+1}"><span class="n">${k+1}</span><img src="${p.tsrc||p.src}" alt=""><em>${esc(p.cap||'Photo '+(k+1))}</em></li>`).join('')}</ol>`:'<div class="none">No photos placed yet.</div>'}</div>`;
-      $('#sTag',el).textContent='Site overview';$('#sCap',el).innerHTML=`<small>Overview</small>${n} photo location${n===1?'':'s'}`;
+      side.innerHTML=`<div class="legend"><h4>${G>1?esc(mapName(D,g)):'Photo locations'}</h4>${n?`<ol>${M.pins.map(p=>`<li data-n="${p.n}"><span class="n">${p.n}</span><img src="${p.tsrc||p.src}" alt=""><em>${esc(p.cap||'Photo '+p.n)}</em></li>`).join('')}</ol>`:'<div class="none">No photos placed yet.</div>'}</div>`;
+      $('#sTag',el).textContent=G>1?`Site map ${g+1} / ${G}`:'Site overview';
+      $('#sCap',el).innerHTML=`<small>${G>1?esc(mapName(D,g)):'Overview'}</small>${n} photo location${n===1?'':'s'}`;
     }else{
-      const p=D.pins[i-1];
+      const p=M.pins[i-1];
       side.innerHTML=`<div class="ph-wrap"><img class="ph" src="${p.src}" alt=""></div>`;
-      $('#sTag',el).textContent=`Photo ${i} / ${n}`;
-      $('#sCap',el).innerHTML=`<small>Photo ${i}</small>${esc(p.cap)}`;
+      $('#sTag',el).textContent=`Photo ${p.n} / ${total(D)}`;
+      $('#sCap',el).innerHTML=`<small>Photo ${p.n}</small>${esc(p.cap)}`;
     }
     [...segs.children].forEach((b,k)=>{b.classList.toggle('on',k===c);b.classList.toggle('done',k<c)});
     const zb=$('[data-a=zoom]',el);zb.classList.toggle('on',!!zoom&&i>0);zb.textContent=zoom&&i>0?`Zoom ${ZOOMS[zoom]}×`:'Zoom';
     draw();
-    const nx=S[c+1];if(nx&&nx.i>0){const im=new Image();im.src=Ds[nx.j].pins[nx.i-1].src}
+    const nx=S[c+1];if(nx&&nx.i>0){const im=new Image();im.src=Ds[nx.j].maps[nx.g].pins[nx.i-1].src}
   }
+  const photoSlide=(j,n)=>S.findIndex(s=>s.j===j&&s.n===n);
   const go=k=>{c=Math.max(0,Math.min(S.length-1,k));render()};
   function close(){document.removeEventListener('keydown',onKey);document.removeEventListener('fullscreenchange',onFs);ro.disconnect();el.remove();if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});if(P&&scene&&mapObj)refreshMap()}
   function toggleFull(){if(document.fullscreenElement)document.exitFullscreen();else if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{})}
   const act={prev:()=>go(c-1),next:()=>go(c+1),zoom:()=>{zoom=(zoom+1)%ZOOMS.length;render()},layout:()=>{const o=['auto','photo','map'];layout=o[(o.indexOf(layout)+1)%o.length];render()},full:toggleFull,exit:close};
   function onKey(e){
-    const k=e.key,{j,i}=S[c];
+    const k=e.key,{j}=S[c];
     if(k==='ArrowRight'||k===' '||k==='PageDown'||k==='Enter'){e.preventDefault();go(c+1)}
     else if(k==='ArrowLeft'||k==='PageUp'||k==='Backspace'){e.preventDefault();go(c-1)}
     else if(k==='Home')go(0);else if(k==='End')go(S.length-1);
     else if(k==='n'||k==='N'){if(j<Ds.length-1)go(jobStart(j+1))}
-    else if(k==='p'||k==='P'){go(i>0?jobStart(j):(j>0?jobStart(j-1):0))}
+    else if(k==='p'||k==='P'){const js=jobStart(j);go(c>js?js:(j>0?jobStart(j-1):0))}
     else if(k==='z'||k==='Z')act.zoom();else if(k==='v'||k==='V')act.layout();else if(k==='f'||k==='F')toggleFull();
     else if(k==='Escape'&&!embedded)close();
-    else if(/^[0-9]$/.test(k)&&+k<=Ds[j].pins.length)go(jobStart(j)+(+k));
+    else if(k==='0')go(jobStart(j));
+    else if(/^[1-9]$/.test(k)){const t=photoSlide(j,+k);if(t>=0)go(t)}
   }
   function onFs(){if(!document.fullscreenElement&&!embedded&&!IS_IOS)close()}
   document.addEventListener('keydown',onKey);document.addEventListener('fullscreenchange',onFs);
   el.addEventListener('click',e=>{
     const b=e.target.closest('[data-a]');if(b)return act[b.dataset.a]();
     const s=e.target.closest('.seg');if(s)return go(+s.dataset.i);
-    const li=e.target.closest('li[data-i]');if(li)return go(jobStart(S[c].j)+(+li.dataset.i));
-    const mk=e.target.closest('.mk');if(mk&&S[c].i===0){const k=Ds[S[c].j].pins.findIndex(p=>p.id===mk.dataset.id);if(k>=0)go(c+k+1)}
+    const li=e.target.closest('li[data-n]');if(li){const t=photoSlide(S[c].j,+li.dataset.n);if(t>=0)go(t);return}
+    const mk=e.target.closest('.mk');if(mk&&S[c].i===0){const k=Ds[S[c].j].maps[S[c].g].pins.findIndex(p=>p.id===mk.dataset.id);if(k>=0)go(c+k+1)}
   });
   /* touch: swipe left/right to change slides, tap the photo (right = next, left = back).
      touchmove is blocked so Safari's toolbars can't slide in and out and resize the page. */
@@ -1250,7 +1446,7 @@ async function restoreBackup(file){
     let i=0;
     for(const b of want){busy(`Restoring photos… ${++i} of ${want.length}`);await DB.put('blobs',await unpack(b))}
     for(const p of take){ // photos come first, then the job, so a cut-off restore never leaves a job pointing at missing photos
-      const keep=new Set([p.mapId,...p.photoIds]);
+      const keep=new Set([...mapIdsOf(p),...p.photoIds]);
       for(const b of await DB.byPid(p.id))if(!keep.has(b.id))await DB.del('blobs',b.id);
       await DB.put('projects',p);
     }
@@ -1397,7 +1593,7 @@ const Sync=(()=>{
   /* Photos only come down for the PM picked on this device (the last PM, meeting or job opened here).
      Other PMs' jobs still sync (names, dates, pins); their photos download when one of their jobs is opened,
      presented, exported or backed up. */
-  const idsOf=p=>[p.mapId,...(p.photoIds||[])].filter(Boolean);
+  const idsOf=p=>[...mapIdsOf(p),...(p.photoIds||[])].filter(Boolean);   // every site map plus the photos
   let followPM=ls.get('twx.sync.pm')||'',followFresh=true;const checked=new Map();
   function follow(pmId){
     if(!pmId||EMBED)return;
@@ -1573,8 +1769,10 @@ async function exportShow(Ds,title,date){
   toast('Building slideshow file…',60000);
   try{
     const out=[];
-    for(const D of Ds){const E={...D,map:{...D.map,src:await dataURL(D.map.src)},pins:[]};
-      for(const p of D.pins)E.pins.push({...p,src:await dataURL(p.src),tsrc:await dataURL(p.tsrc||p.src)});out.push(E)}
+    for(const D of Ds){const E={...D,maps:[]};
+      for(const M of D.maps){const EM={...M,src:await dataURL(M.src),pins:[]};
+        for(const p of M.pins)EM.pins.push({...p,src:await dataURL(p.src),tsrc:await dataURL(p.tsrc||p.src)});E.maps.push(EM)}
+      out.push(E)}
     const json=JSON.stringify({title,date,jobs:out}).replace(/</g,'\\u003c');
     const html=SOURCE.replace('EMBED=null;/*@@'+'EMBED@@*/',()=>'EMBED='+json+';/*@@'+'EMBED@@*/').replace(/<title>.*?<\/title>/,()=>'<title>'+esc(title)+' – TWX Site Photos</title>');
     const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([html],{type:'text/html'}));
@@ -1582,8 +1780,8 @@ async function exportShow(Ds,title,date){
     document.querySelectorAll('.toast').forEach(t=>t.remove());toast('Slideshow saved — open it on any device, no internet or app needed');
   }catch(e){console.error(e);document.querySelectorAll('.toast').forEach(t=>t.remove());toast('Export failed')}
 }
-$('#bPresent').addEventListener('click',()=>{if(P&&mapObj)startShow([buildShowData()])});
-$('#bExport').addEventListener('click',()=>{if(P&&mapObj)exportShow([buildShowData()],P.name,P.date)});
+$('#bPresent').addEventListener('click',()=>{const D=P&&mapObj&&buildShowData();if(D)startShow([D])});
+$('#bExport').addEventListener('click',()=>{const D=P&&mapObj&&buildShowData();if(D)exportShow([D],P.name,P.date)});
 
 /* ================= boot ================= */
 (async()=>{

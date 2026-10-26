@@ -1,4 +1,4 @@
-# TWX Site Photo Map
+﻿# TWX Site Photo Map
 
 A single-page web app for building photo-location slideshows for the weekly PM meeting.
 
@@ -11,6 +11,17 @@ Open the GitHub Pages address for this repo (Settings -> Pages shows it), for ex
 `https://YOUR-USERNAME.github.io/YOUR-REPO/photo-map/`
 
 On iPad/iPhone: open it in Safari, tap Share -> Add to Home Screen, and launch it from there for a full-screen app with no browser bars.
+
+## Copy a previous meeting
+- **+ New meeting date** asks "Copy a previous meeting?" when the PM already has one. Pick which meeting to copy from, or start blank.
+- It copies every job in the same order, with all of its site maps (and their names). Photos, markers and captions are not copied, so each job is ready for this week's pictures. The old meeting is not changed.
+- Only meetings that have not reached their 2-week cleanup yet can be copied.
+
+## Several site maps in one job
+- In a job, **+ Add site map** adds another map, for example a building floor plan, and asks for its name. Photos you place go on the map on screen.
+- With two or more maps, tabs above the map switch between them. Tap the selected tab to rename it, move it earlier or later in the slideshow, or remove it.
+- The slide order strip shows where the slideshow switches maps. In the slideshow each map gets an overview slide, then the photos placed on it. Photo numbers keep counting across maps. Extra maps with no photos placed are skipped.
+- **Earlier / Later** moves a photo only among the photos on its own map. To move a photo to another map, remove its marker and place it on that map.
 
 ## Move jobs between devices (Backup / Restore)
 - **Back up**: on the home page (everything), a PM's page (that PM), or a meeting page (that meeting). It saves one `.twxbackup` file with the photos inside.
