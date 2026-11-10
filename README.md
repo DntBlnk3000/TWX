@@ -20,8 +20,14 @@ On iPad/iPhone: open it in Safari, tap Share -> Add to Home Screen, and launch i
 ## Several site maps in one job
 - In a job, **+ Add site map** adds another map, for example a building floor plan, and asks for its name. Photos you place go on the map on screen.
 - With two or more maps, tabs above the map switch between them. Tap the selected tab to rename it, move it earlier or later in the slideshow, or remove it.
-- The slide order strip shows where the slideshow switches maps. In the slideshow each map gets an overview slide, then the photos placed on it. Photo numbers keep counting across maps. Extra maps with no photos placed are skipped.
+- The slide order strip shows where the slideshow switches maps. The slideshow opens with one overview slide (the first map, with every photo of the job listed by map), then shows the photos map by map. It goes straight from the last photo on one map to the first photo on the next, with no overview slide in between. Photo numbers keep counting across maps. Extra maps with no photos placed are skipped.
 - **Earlier / Later** moves a photo only among the photos on its own map. To move a photo to another map, remove its marker and place it on that map.
+
+## Zoom in while presenting
+- **Touchscreen:** pinch a photo or the site map to zoom in, drag with one finger to look around, and double-tap to see the whole picture again.
+- **Computer:** scroll the mouse wheel (or pinch the trackpad) over a photo or the map, drag to look around, and double-click to zoom in or back out. The **+** and **-** keys zoom too, and **Esc** zooms back out.
+- Photos also have **+ / -** buttons in the corner, and **Reset** shows the whole picture again.
+- Going to the next slide always starts zoomed out. While a picture is zoomed in, swipes move the picture instead of changing slides; use the arrow buttons or zoom back out to move on.
 
 ## Move jobs between devices (Backup / Restore)
 - **Back up**: on the home page (everything), a PM's page (that PM), or a meeting page (that meeting). It saves one `.twxbackup` file with the photos inside.

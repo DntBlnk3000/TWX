@@ -222,9 +222,21 @@ img{-webkit-user-drag:none}
 #show .s-side img.ph{max-width:100%;max-height:100%;object-fit:contain;display:block;animation:fadein .35s ease}
 @keyframes fadein{from{opacity:0}to{opacity:1}}
 #show .s-side .ph-wrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+/* zoom on the photo or map: pinch / scroll wheel / double-click, drag to move around */
+#show .s-side img.ph{transform-origin:0 0}
+#show .zoomed{cursor:grab}
+#show .zoomed.grabbing{cursor:grabbing}
+#show .zbar{position:absolute;right:12px;bottom:12px;z-index:2;display:flex;gap:6px}
+#show .zbar button{background:rgba(20,20,20,.75);color:#fff;border:0;min-width:48px;height:48px;padding:0;font-family:inherit;font-size:26px;font-weight:800;line-height:1;cursor:pointer}
+#show .zbar button:hover{background:var(--amber);color:var(--ink)}
+#show .zbar button:disabled{opacity:.35;cursor:default;background:rgba(20,20,20,.75);color:#fff}
+#show .zbar .zr{font-size:14px;letter-spacing:.5px;text-transform:uppercase;padding:0 14px}
+#show .zbar [hidden]{display:none}
 #show .legend{position:absolute;inset:0;overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;padding:clamp(14px,3vh,32px) clamp(16px,2.4vw,40px);background:var(--ink)}
 #show .legend h4{margin:0 0 14px;font-family:var(--display);font-weight:400;color:var(--amber);letter-spacing:3px;text-transform:uppercase;font-size:clamp(20px,3.2vh,34px)}
 #show .legend ol{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+#show .legend h5{margin:18px 0 8px;color:#bbb;font-size:clamp(13px,1.9vh,17px);font-weight:800;letter-spacing:1.5px;text-transform:uppercase}
+#show .legend h4+h5{margin-top:0}
 #show .legend li{display:flex;gap:14px;align-items:center;background:var(--ink-2);padding:8px 14px 8px 8px;cursor:pointer;font-size:clamp(15px,2.3vh,22px);font-weight:600}
 #show .legend li:hover{background:#3a3a3a}
 #show .legend li span.n{flex:none;background:var(--amber);color:var(--ink);font-weight:900;min-width:2.1em;height:2.1em;display:flex;align-items:center;justify-content:center}
@@ -1284,31 +1296,39 @@ function startShow(Ds,opts={}){
   // slideshow files saved by the older version have one map per job: treat it as a one-map list
   Ds=Ds.map(D=>D.maps?D:{...D,maps:[{...D.map,name:'',pins:D.pins.map((p,k)=>({...p,n:k+1}))}]});
   const embedded=!!opts.embedded,multi=Ds.length>1;
-  // one slide per map overview, then one per photo on that map
-  const S=[];Ds.forEach((D,j)=>D.maps.forEach((M,g)=>{S.push({j,g,i:0});M.pins.forEach((p,k)=>S.push({j,g,i:k+1,n:p.n}))}));
+  // one overview slide per job (on its first site map), then its photos map by map.
+  // Extra site maps get no overview slide: the show goes straight from one map's last photo to the next map's first photo.
+  const S=[];Ds.forEach((D,j)=>D.maps.forEach((M,g)=>{if(g===0)S.push({j,g,i:0});M.pins.forEach((p,k)=>S.push({j,g,i:k+1,n:p.n}))}));
   const total=D=>D.maps.reduce((s,M)=>s+M.pins.length,0);
   const el=document.createElement('div');el.id='show';el.className='anim';
   el.innerHTML=`<div class="s-head"><div class="s-logo">${LOGO_HTML}</div><div class="s-title" id="sTitle"></div><div class="s-date" id="sSub"></div><div class="grow"></div>${multi?'<span class="s-job" id="sJob"></span>':''}<span class="tag dark" id="sTag"></span></div>
-  <div class="s-main" id="sMain"><div class="s-map"><svg id="sSvg"></svg></div><div class="s-side" id="sSide"></div></div>
+  <div class="s-main" id="sMain"><div class="s-map"><svg id="sSvg"></svg><div class="zbar"><button class="zr" data-a="mreset" title="Show the whole map again" hidden>Reset</button></div></div><div class="s-side" id="sSide"></div></div>
   <div class="s-foot"><div class="s-cap" id="sCap"></div><div class="tools"><button data-a="zoom" title="Zoom map to marker (Z)">Zoom</button><button data-a="layout" title="Change layout (V)">Layout</button>${IS_IOS?'':'<button data-a="full" title="Fullscreen (F)">&#9974;</button>'}${embedded?'':'<button data-a="exit" title="Exit (Esc)">Exit</button>'}</div><div class="segs" id="segs"></div><div class="nav"><button data-a="prev" title="Previous (←)">&#9664;</button><button data-a="next" title="Next (→)">&#9654;</button></div></div>`;
   document.body.appendChild(el);
   const sc=new Scene($('#sSvg',el));
   let c=0,layout='auto',zoom=0,curJ=-1,curKey='';const ZOOMS=[0,2.5,5];
+  /* zooming in on a picture during the show (pinch, scroll wheel, double-click, + / − buttons and keys).
+     pz = photo zoom (k 1 = whole photo). mv = map view zoomed by hand (null = the slide's own view). Both reset on every slide. */
+  const PH_MAX=6,MAP_MAX=10;
+  let pz={k:1,x:0,y:0},mv=null,baseV=null,curV=null,fitK=1;
   const segs=$('#segs',el);
   const mapName=(D,g)=>D.maps[g].name||('Site map '+(g+1));
-  segs.innerHTML=S.map((s,k)=>{const D=Ds[s.j];return`<button class="seg${s.i===0&&s.g===0&&s.j>0?' gap':''}${s.i===0&&s.g>0?' mgap':''}" data-i="${k}" title="${esc(D.name)} — ${s.i?'Photo '+s.n:(D.maps.length>1?esc(mapName(D,s.g)):'Overview')}"></button>`}).join('');
+  segs.innerHTML=S.map((s,k)=>{const D=Ds[s.j],G=D.maps.length;return`<button class="seg${s.i===0&&s.j>0?' gap':''}${s.g>0&&s.i===1?' mgap':''}" data-i="${k}" title="${esc(D.name)} — ${s.i?'Photo '+s.n+(G>1?' · '+esc(mapName(D,s.g)):''):'Overview'}"></button>`}).join('');
   const jobStart=j=>S.findIndex(s=>s.j===j&&s.i===0);
   const layoutClass=()=>layout==='auto'?(S[c].i===0?'overview':'split'):layout;
   function draw(){
     const{j,g,i}=S[c],D=Ds[j],M=D.maps[g];
+    zbarSync();
     const w=sc.svg.clientWidth,h=sc.svg.clientHeight;if(!w||!h)return;
     const f=sc.fit(.94);let v=f;
     if(i>0&&zoom){const p=M.pins[i-1],k=f.k*ZOOMS[zoom];v={k,x:w/2-p.x*M.w*k,y:h/2-p.y*M.h*k}}
+    baseV=v;fitK=f.k;curV=mv||v;
     const mult=Math.max(.9,Math.min(1.6,w/560))*(i===0?.85:1);
-    sc.draw({view:v,pins:M.pins,activeId:i>0?M.pins[i-1].id:null,size:D.size,mult,dim:i>0,edit:false});
+    sc.draw({view:curV,pins:M.pins,activeId:i>0?M.pins[i-1].id:null,size:D.size,mult,dim:i>0,edit:false});
   }
   function render(){
-    const{j,g,i}=S[c],D=Ds[j],M=D.maps[g],n=M.pins.length,G=D.maps.length;
+    const{j,g,i}=S[c],D=Ds[j],M=D.maps[g],G=D.maps.length;
+    pz={k:1,x:0,y:0};mv=null;pts.clear();gz=null;$('.s-map',el).classList.remove('grabbing');
     if(j+':'+g!==curKey){ // new job or the next site map of this job
       curKey=j+':'+g;sc.setMap(M);
       el.classList.add('noanim');requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.remove('noanim')));
@@ -1322,12 +1342,15 @@ function startShow(Ds,opts={}){
     $('#sMain',el).className='s-main '+layoutClass();
     const side=$('#sSide',el);
     if(i===0){
-      side.innerHTML=`<div class="legend"><h4>${G>1?esc(mapName(D,g)):'Photo locations'}</h4>${n?`<ol>${M.pins.map(p=>`<li data-n="${p.n}"><span class="n">${p.n}</span><img src="${p.tsrc||p.src}" alt=""><em>${esc(p.cap||'Photo '+p.n)}</em></li>`).join('')}</ol>`:'<div class="none">No photos placed yet.</div>'}</div>`;
-      $('#sTag',el).textContent=G>1?`Site map ${g+1} / ${G}`:'Site overview';
-      $('#sCap',el).innerHTML=`<small>${G>1?esc(mapName(D,g)):'Overview'}</small>${n} photo location${n===1?'':'s'}`;
+      // the overview lists every photo of the job; with several site maps they are grouped by map
+      const n=total(D),li=p=>`<li data-n="${p.n}"><span class="n">${p.n}</span><img src="${p.tsrc||p.src}" alt=""><em>${esc(p.cap||'Photo '+p.n)}</em></li>`;
+      const list=G>1?D.maps.map((Mx,gx)=>Mx.pins.length?`<h5>${esc(mapName(D,gx))}</h5><ol>${Mx.pins.map(li).join('')}</ol>`:'').join(''):`<ol>${M.pins.map(li).join('')}</ol>`;
+      side.innerHTML=`<div class="legend"><h4>Photo locations</h4>${n?list:'<div class="none">No photos placed yet.</div>'}</div>`;
+      $('#sTag',el).textContent='Site overview';
+      $('#sCap',el).innerHTML=`<small>Overview</small>${n} photo location${n===1?'':'s'}`;
     }else{
       const p=M.pins[i-1];
-      side.innerHTML=`<div class="ph-wrap"><img class="ph" src="${p.src}" alt=""></div>`;
+      side.innerHTML=`<div class="ph-wrap"><img class="ph" src="${p.src}" alt="" draggable="false"></div><div class="zbar"><button class="zr" data-a="zreset" title="Show the whole photo again (Esc)" hidden>Reset</button><button data-a="zout" title="Zoom out (−)">&minus;</button><button data-a="zin" title="Zoom in (+)">+</button></div>`;
       $('#sTag',el).textContent=`Photo ${p.n} / ${total(D)}`;
       $('#sCap',el).innerHTML=`<small>Photo ${p.n}</small>${esc(p.cap)}`;
     }
@@ -1336,11 +1359,59 @@ function startShow(Ds,opts={}){
     draw();
     const nx=S[c+1];if(nx&&nx.i>0){const im=new Image();im.src=Ds[nx.j].maps[nx.g].pins[nx.i-1].src}
   }
+
+  /* ---- zoom: z is 'ph' (the photo) or 'map' (the site map). A view {k,x,y} puts content point l at screen ox + x + l*k ---- */
+  const box=z=>z==='ph'?$('.ph-wrap',el):sc.svg;
+  function zinfo(z){
+    if(z==='ph'){
+      const img=$('.ph',el),wrap=img&&img.parentNode;if(!img||!img.offsetWidth||!wrap.clientWidth)return null;
+      return{W:wrap.clientWidth,H:wrap.clientHeight,ox:img.offsetLeft,oy:img.offsetTop,cw:img.offsetWidth,ch:img.offsetHeight,v:pz,min:1,max:PH_MAX,slack:0};
+    }
+    const M=sc.map,W=sc.svg.clientWidth,H=sc.svg.clientHeight;if(!M||!W||!H||!curV)return null;
+    return{W,H,ox:0,oy:0,cw:M.w,ch:M.h,v:curV,min:fitK,max:fitK*MAP_MAX,slack:.5};
+  }
+  // keep the picture on screen: a photo always fills the panel edge to edge once zoomed; a map edge can come in up to the middle
+  function clampV(v,Z){
+    const k=Math.min(Z.max,Math.max(Z.min,v.k));
+    const fix=(x,o,W,s)=>Z.slack?Math.min(W*Z.slack-o,Math.max(W*(1-Z.slack)-s-o,x)):(s<=W?(W-s)/2-o:Math.min(-o,Math.max(W-s-o,x)));
+    return{k,x:fix(v.x,Z.ox,Z.W,Z.cw*k),y:fix(v.y,Z.oy,Z.H,Z.ch*k)};
+  }
+  let qT=0;const quiet=()=>{el.classList.add('noanim');clearTimeout(qT);qT=setTimeout(()=>el.classList.remove('noanim'),200)};
+  function setV(z,v,smooth){
+    const Z=zinfo(z);if(!Z)return;v=clampV(v,Z);
+    if(z==='ph'){
+      pz=v.k<=1.001?{k:1,x:0,y:0}:v;
+      const img=$('.ph',el);img.style.transition=smooth?'transform .3s ease':'none';
+      img.style.transform=pz.k===1?'':`translate(${pz.x}px,${pz.y}px) scale(${pz.k})`;
+      zbarSync();
+    }else{
+      mv=v.k<=Z.min*1.001&&baseV.k<=Z.min*1.001?null:v;   // zoomed all the way out = the normal view again
+      if(!smooth)quiet();draw();
+    }
+  }
+  function zoomAt(z,f,px,py,smooth){
+    const Z=zinfo(z);if(!Z)return;const v=Z.v;
+    if(px==null){px=Z.W/2;py=Z.H/2}
+    const nk=Math.min(Z.max,Math.max(Z.min,v.k*f)),r=nk/v.k;
+    setV(z,{k:nk,x:px-Z.ox-(px-Z.ox-v.x)*r,y:py-Z.oy-(py-Z.oy-v.y)*r},smooth);
+  }
+  function resetZ(z,smooth){if(z==='ph')setV('ph',{k:1,x:0,y:0},smooth);else{mv=null;if(!smooth)quiet();draw()}}
+  const isZoomed=z=>z==='ph'?pz.k>1.001:z==='map'&&!!mv;
+  function zbarSync(){
+    const wrap=$('.ph-wrap',el);
+    if(wrap){const on=pz.k>1.001;wrap.classList.toggle('zoomed',on);$('[data-a=zreset]',el).hidden=!on;$('[data-a=zout]',el).disabled=!on;$('[data-a=zin]',el).disabled=pz.k>=PH_MAX-.001}
+    $('[data-a=mreset]',el).hidden=!mv;$('.s-map',el).classList.toggle('zoomed',!!mv);
+  }
+  const keyZone=()=>S[c].i>0&&layoutClass()!=='map'?'ph':'map';
+  // which picture a pointer is on (none for buttons and the photo list)
+  const zoneOf=t=>!t||!t.closest||t.closest('button,.legend,.zbar')?null:t.closest('.ph-wrap')?'ph':t.closest('.s-map')?'map':null;
+
   const photoSlide=(j,n)=>S.findIndex(s=>s.j===j&&s.n===n);
   const go=k=>{c=Math.max(0,Math.min(S.length-1,k));render()};
-  function close(){document.removeEventListener('keydown',onKey);document.removeEventListener('fullscreenchange',onFs);ro.disconnect();el.remove();if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});if(P&&scene&&mapObj)refreshMap()}
+  function close(){document.removeEventListener('keydown',onKey);document.removeEventListener('fullscreenchange',onFs);['pointermove','pointerup','pointercancel'].forEach(t=>window.removeEventListener(t,onPtr[t]));ro.disconnect();el.remove();if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});if(P&&scene&&mapObj)refreshMap()}
   function toggleFull(){if(document.fullscreenElement)document.exitFullscreen();else if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{})}
-  const act={prev:()=>go(c-1),next:()=>go(c+1),zoom:()=>{zoom=(zoom+1)%ZOOMS.length;render()},layout:()=>{const o=['auto','photo','map'];layout=o[(o.indexOf(layout)+1)%o.length];render()},full:toggleFull,exit:close};
+  const act={prev:()=>go(c-1),next:()=>go(c+1),zoom:()=>{zoom=(zoom+1)%ZOOMS.length;render()},layout:()=>{const o=['auto','photo','map'];layout=o[(o.indexOf(layout)+1)%o.length];render()},full:toggleFull,exit:close,
+    zin:()=>zoomAt('ph',1.6,null,null,true),zout:()=>zoomAt('ph',1/1.6,null,null,true),zreset:()=>resetZ('ph',true),mreset:()=>resetZ('map',true)};
   function onKey(e){
     const k=e.key,{j}=S[c];
     if(k==='ArrowRight'||k===' '||k==='PageDown'||k==='Enter'){e.preventDefault();go(c+1)}
@@ -1349,29 +1420,119 @@ function startShow(Ds,opts={}){
     else if(k==='n'||k==='N'){if(j<Ds.length-1)go(jobStart(j+1))}
     else if(k==='p'||k==='P'){const js=jobStart(j);go(c>js?js:(j>0?jobStart(j-1):0))}
     else if(k==='z'||k==='Z')act.zoom();else if(k==='v'||k==='V')act.layout();else if(k==='f'||k==='F')toggleFull();
-    else if(k==='Escape'&&!embedded)close();
+    else if(k==='+'||k==='=')zoomAt(keyZone(),1.6,null,null,true);
+    else if(k==='-'||k==='_')zoomAt(keyZone(),1/1.6,null,null,true);
+    else if(k==='Escape'){if(isZoomed('ph')||isZoomed('map')){resetZ('ph',true);resetZ('map',true)}else if(!embedded)close()}
     else if(k==='0')go(jobStart(j));
     else if(/^[1-9]$/.test(k)){const t=photoSlide(j,+k);if(t>=0)go(t)}
   }
   function onFs(){if(!document.fullscreenElement&&!embedded&&!IS_IOS)close()}
   document.addEventListener('keydown',onKey);document.addEventListener('fullscreenchange',onFs);
+  let noClick=0;
   el.addEventListener('click',e=>{
     const b=e.target.closest('[data-a]');if(b)return act[b.dataset.a]();
+    if(Date.now()-noClick<400)return;   // the mouse was dragging a zoomed picture around, not clicking
     const s=e.target.closest('.seg');if(s)return go(+s.dataset.i);
     const li=e.target.closest('li[data-n]');if(li){const t=photoSlide(S[c].j,+li.dataset.n);if(t>=0)go(t);return}
     const mk=e.target.closest('.mk');if(mk&&S[c].i===0){const k=Ds[S[c].j].maps[S[c].g].pins.findIndex(p=>p.id===mk.dataset.id);if(k>=0)go(c+k+1)}
   });
+
+  /* zoom gestures (mouse, pen and touch): two fingers pinch; one finger or the mouse drags a zoomed picture around;
+     double-tap (touch) or double-click (mouse) goes back to the whole picture. Scroll wheel / trackpad pinch zooms. */
+  const pts=new Map();let gz=null,lastTap=null,ptrType='';
+  function startPinch(){
+    const Z=zinfo(gz.z);if(!Z){gz.mode=null;return}
+    const[a,b]=[...pts.values()],r=box(gz.z).getBoundingClientRect();
+    Object.assign(gz,{mode:'pinch',r,d:Math.hypot(a.x-b.x,a.y-b.y)||1,cx:(a.x+b.x)/2-r.left,cy:(a.y+b.y)/2-r.top,v:{...Z.v}});
+  }
+  function startPan(x,y,moved){
+    const Z=zinfo(gz.z);if(!Z){gz.mode=null;return}
+    Object.assign(gz,{mode:'pan',sx:x,sy:y,v:{...Z.v},moved});box(gz.z).classList.add('grabbing');
+  }
+  el.addEventListener('pointerdown',e=>{
+    ptrType=e.pointerType;
+    if(e.pointerType==='mouse'&&e.button!==0)return;
+    if(!pts.size){const z=zoneOf(e.target);if(!z)return;gz={z,mode:null}}
+    else if(!gz)return;
+    pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(pts.size===2)startPinch();
+    else if(pts.size===1&&isZoomed(gz.z)){startPan(e.clientX,e.clientY,false);if(e.pointerType==='mouse')e.preventDefault()}
+  });
+  const onPtr={
+    pointermove(e){
+      const p=pts.get(e.pointerId);if(!p)return;
+      if(e.pointerType==='mouse'&&!e.buttons)return onPtr.pointerup(e);   // mouse let go outside the window
+      p.x=e.clientX;p.y=e.clientY;
+      if(!gz||!gz.mode)return;
+      if(gz.mode==='pinch'&&pts.size>=2){
+        const Z=zinfo(gz.z);if(!Z)return;
+        const[a,b]=[...pts.values()],d=Math.hypot(a.x-b.x,a.y-b.y)||1,cx=(a.x+b.x)/2-gz.r.left,cy=(a.y+b.y)/2-gz.r.top,v=gz.v;
+        const nk=Math.min(Z.max,Math.max(Z.min,v.k*d/gz.d)),r=nk/v.k;
+        setV(gz.z,{k:nk,x:cx-Z.ox-(gz.cx-Z.ox-v.x)*r,y:cy-Z.oy-(gz.cy-Z.oy-v.y)*r});
+      }else if(gz.mode==='pan'){
+        const dx=e.clientX-gz.sx,dy=e.clientY-gz.sy;if(Math.abs(dx)+Math.abs(dy)>6)gz.moved=true;
+        setV(gz.z,{k:gz.v.k,x:gz.v.x+dx,y:gz.v.y+dy});
+      }
+    },
+    pointerup(e){
+      if(!pts.delete(e.pointerId)||!gz)return;
+      const g=gz;
+      if(g.mode==='pinch'){
+        // one finger still down: carry on moving the zoomed picture with it
+        if(pts.size===1&&isZoomed(g.z)){const p=[...pts.values()][0];startPan(p.x,p.y,true)}else g.mode=null;
+      }else if(g.mode==='pan'){
+        box(g.z)&&box(g.z).classList.remove('grabbing');
+        if(g.moved)noClick=Date.now();
+        else if(e.pointerType==='touch'){ // double-tap a zoomed picture to see all of it again
+          const t=Date.now();
+          if(lastTap&&lastTap.z===g.z&&t-lastTap.t<350&&Math.hypot(e.clientX-lastTap.x,e.clientY-lastTap.y)<40){lastTap=null;resetZ(g.z,true)}
+          else lastTap={t,z:g.z,x:e.clientX,y:e.clientY};
+        }
+        g.mode=null;
+      }
+      if(!pts.size)gz=null;
+    }
+  };
+  onPtr.pointercancel=onPtr.pointerup;
+  ['pointermove','pointerup','pointercancel'].forEach(t=>window.addEventListener(t,onPtr[t]));
+  el.addEventListener('wheel',e=>{
+    const z=zoneOf(e.target);if(!z)return;e.preventDefault();if(gs)return;
+    const r=box(z).getBoundingClientRect(),dy=e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?400:1);
+    zoomAt(z,Math.exp(-Math.max(-100,Math.min(100,dy))*(e.ctrlKey?.01:.0025)),e.clientX-r.left,e.clientY-r.top);
+  },{passive:false});
+  // Safari on a Mac sends trackpad pinches as gesture events (on iPad/iPhone the finger pinch above handles it)
+  let gs=null;
+  el.addEventListener('gesturestart',e=>{if(ptrType==='touch'||pts.size)return;const z=zoneOf(e.target),Z=z&&zinfo(z);if(Z)gs={z,v:{...Z.v},r:box(z).getBoundingClientRect()}});
+  el.addEventListener('gesturechange',e=>{
+    if(!gs)return;const Z=zinfo(gs.z);if(!Z)return;
+    const v=gs.v,nk=Math.min(Z.max,Math.max(Z.min,v.k*(e.scale||1))),r=nk/v.k,px=e.clientX-gs.r.left,py=e.clientY-gs.r.top;
+    setV(gs.z,{k:nk,x:px-Z.ox-(px-Z.ox-v.x)*r,y:py-Z.oy-(py-Z.oy-v.y)*r});
+  });
+  el.addEventListener('gestureend',()=>{gs=null});
+  el.addEventListener('dblclick',e=>{
+    if(ptrType==='touch')return;
+    const z=zoneOf(e.target);if(!z||e.target.closest('.mk'))return;
+    if(isZoomed(z))return resetZ(z,true);
+    const r=box(z).getBoundingClientRect();zoomAt(z,2.5,e.clientX-r.left,e.clientY-r.top,true);
+  });
+
   /* touch: swipe left/right to change slides, tap the photo (right = next, left = back).
+     Not while a picture is zoomed in: then one finger moves it around instead.
      touchmove is blocked so Safari's toolbars can't slide in and out and resize the page. */
   let tt=null;
-  el.addEventListener('touchstart',e=>{if(e.touches.length===1&&!e.target.closest('button,.legend'))tt={x:e.touches[0].clientX,y:e.touches[0].clientY,t:Date.now()};else tt=null},{passive:true});
+  el.addEventListener('touchstart',e=>{if(e.touches.length===1&&!e.target.closest('button,.legend')&&!isZoomed(zoneOf(e.target)))tt={x:e.touches[0].clientX,y:e.touches[0].clientY,t:Date.now()};else tt=null},{passive:true});
   el.addEventListener('touchmove',e=>{if(!e.target.closest('.legend'))e.preventDefault()},{passive:false});
   el.addEventListener('touchend',e=>{
     if(!tt)return;const a=tt;tt=null;const t=e.changedTouches[0],dx=t.clientX-a.x,dy=t.clientY-a.y;
     if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.4){go(c+(dx<0?1:-1))}
     else if(Math.abs(dx)<12&&Math.abs(dy)<12&&Date.now()-a.t<450&&e.target.closest('.ph-wrap,.ph')){go(t.clientX<innerWidth*.3?c-1:c+1);e.preventDefault()}
   });
-  const ro=new ResizeObserver(()=>{el.classList.add('noanim');draw();requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.remove('noanim')))});
+  // a new window size or layout puts the pictures back to normal
+  const ro=new ResizeObserver(()=>{
+    el.classList.add('noanim');
+    if(mv||pz.k>1){mv=null;pz={k:1,x:0,y:0};const img=$('.ph',el);if(img){img.style.transition='none';img.style.transform=''}}
+    draw();requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.remove('noanim')));
+  });
   ro.observe(sc.svg);
   if(!embedded&&!IS_IOS)toggleFull();
   render();
