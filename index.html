@@ -92,6 +92,10 @@ img{-webkit-user-drag:none}
 .mrow .ma{display:flex;gap:6px}
 .mrow .ma button{background:#eceae2;border:0;min-width:44px;height:44px;cursor:pointer;font-weight:700;padding:0 12px}
 .mrow .ma button:hover{background:var(--amber)}
+.mrow .ma .pf{background:var(--ink);color:#fff;white-space:nowrap}
+.mrow .ma .pf:hover{background:var(--amber);color:var(--ink)}
+.mrow .ma button:disabled{opacity:.4;cursor:default;background:#eceae2;color:inherit}
+@media (max-width:700px){.mrow{flex-wrap:wrap}.mrow .ma{flex-basis:100%;justify-content:flex-end;flex-wrap:wrap}.mrow .ma .pf{margin-right:auto}}
 .mempty{padding:40px;text-align:center;color:var(--mute);font-size:19px;border:3px dashed #d4d1c4;background:#fff}
 
 /* ---------- editor ---------- */
@@ -171,6 +175,9 @@ img{-webkit-user-drag:none}
 /* iPad portrait / narrow screens: stack map on top, photo panel below */
 @media (max-width:1000px){
   .top{padding-left:136px;gap:10px}
+  .top .btn{padding:10px 18px}
+  .top .wide{display:none}
+  .pname{min-width:80px}
   #editor{grid-template-columns:1fr;grid-template-rows:minmax(0,1.2fr) 96px minmax(0,1fr)}
   .stage{border-right:0}
   .strip{grid-row:2}
@@ -311,8 +318,8 @@ dialog label.opt input{width:20px;height:20px;padding:0;margin:0;accent-color:va
   <h1 id="topTitle">Site Photo Map</h1>
   <input class="pname hide" id="pname" spellcheck="false" maxlength="60"><select class="pmeet hide" id="pmeet" title="Meeting date this job belongs to"></select>
   <div class="grow"></div>
-  <button class="btn ghost hide" id="bExport">Export Slideshow</button>
-  <button class="btn dark hide" id="bPresent">&#9654; Present</button>
+  <button class="btn ghost hide" id="bExport" title="Export this job as a slideshow file">Export<span class="wide"> Slideshow</span></button>
+  <button class="btn dark hide" id="bPresent" title="Start the meeting slideshow at this job">&#9654; Present from here</button>
   <button class="sync" id="bSync" type="button" title="Cloud sync" data-s="loading"><i></i><span>Connecting…</span></button>
 </header>
 
@@ -572,7 +579,7 @@ async function showMeeting(id){
   for(const [k,jid] of curMeeting.jobIds.entries()){
     const p=normProject(byId[jid]),nm=p.maps.length;let thumb='';
     if(nm){const b=await DB.get('blobs',p.maps[0].id);if(b)thumb=URL.createObjectURL(b.thumb)}
-    rows.push(`<div class="mrow" draggable="true" data-i="${k}" data-id="${jid}"><span class="grip" title="Drag to reorder">&#8942;&#8942;</span><b class="no">${k+1}</b><div class="mth" style="${thumb?`background-image:url(${thumb})`:''}"></div><div class="mi"><h3>${esc(p.name)}</h3><div class="sub">${nm?`${p.pins.length} photo${p.pins.length===1?'':'s'} on ${nm>1?`${nm} site maps`:'the map'}`:'<b style="color:#b45309">No site map yet — will be skipped</b>'}</div></div><div class="ma"><button data-up title="Move up">&#9650;</button><button data-dn title="Move down">&#9660;</button><button data-open title="Open job">Open</button><button data-rmj title="Delete job">&times;</button></div></div>`);
+    rows.push(`<div class="mrow" draggable="true" data-i="${k}" data-id="${jid}"><span class="grip" title="Drag to reorder">&#8942;&#8942;</span><b class="no">${k+1}</b><div class="mth" style="${thumb?`background-image:url(${thumb})`:''}"></div><div class="mi"><h3>${esc(p.name)}</h3><div class="sub">${nm?`${p.pins.length} photo${p.pins.length===1?'':'s'} on ${nm>1?`${nm} site maps`:'the map'}`:'<b style="color:#b45309">No site map yet — will be skipped</b>'}</div></div><div class="ma"><button class="pf" data-presj title="${nm?'Start the meeting slideshow at this job':'No site map yet'}"${nm?'':' disabled'}>&#9654; Present from here</button><button data-up title="Move up">&#9650;</button><button data-dn title="Move down">&#9660;</button><button data-open title="Open job">Open</button><button data-rmj title="Delete job">&times;</button></div></div>`);
   }
   $('#home').innerHTML=`<section class="hero"><p><a href="#" id="bkPM" style="color:var(--amber);font-weight:700">&larr; ${esc(curPM?curPM.name:'Back')}</a></p>
     <h2>Meeting ${esc(numDate(curMeeting.date))}</h2><div class="mdate"><input type="date" id="mDate" value="${esc(curMeeting.date||'')}"> <span>${curMeeting.jobIds.length} job${curMeeting.jobIds.length===1?'':'s'}${expiryOf(curMeeting)?` · auto-deletes ${esc(numDate(expiryOf(curMeeting)))} with its photos`:''}</span></div>
@@ -589,10 +596,14 @@ async function readyJobs(ids){
   return{Ds:await jobsData(ids),lost:r.missing&&!r.sure?r.missing:0};
 }
 const lostMsg=n=>`${n} photo${n===1?' has':'s have'} not downloaded to this device yet (no connection?) and ${n===1?'is':'are'} left out.`;
-async function presentIds(ids,date){
+async function presentIds(ids,date,fromId){
   const {Ds,lost}=await readyJobs(ids);
   if(!Ds.length)return toast('None of these jobs have a site map yet');
-  startShow(Ds,{date});
+  // start at this job, or the next one after it that has a site map
+  let from=0;
+  if(fromId){const rest=ids.slice(Math.max(0,ids.indexOf(fromId)));from=Ds.findIndex(D=>rest.includes(D.id));
+    if(from<0)return toast('This job and the jobs after it have no site map yet',5000)}
+  startShow(Ds,{date,from});
   if(lost)toast(lostMsg(lost),7000);
 }
 async function deleteProject(id){const bl=await DB.byPid(id);for(const b of bl)await DB.del('blobs',b.id);await DB.del('projects',id)}   // cloud sync also clears this job's cloud photos that never came to this device
@@ -699,6 +710,7 @@ $('#home').addEventListener('click',async e=>{
   if(t.closest('[data-dn]')&&i<ids.length-1){[ids[i+1],ids[i]]=[ids[i],ids[i+1]];await saveMtg();return showMeeting(curMeeting.id)}
   if(t.closest('[data-rmj]')){const p=await DB.get('projects',row.dataset.id);if(confirm(`Delete "${p.name}" and all of its photos? This can't be undone.`)){await deleteProject(p.id);ids.splice(i,1);await saveMtg();showMeeting(curMeeting.id)}return}
   if(t.closest('[data-open]')){origin={t:'mtg',id:curMeeting.id};return openProject(row.dataset.id)}
+  if(t.closest('[data-presj]'))return presentIds(await idsForMeeting(curMeeting),curMeeting.date,row.dataset.id);
 });
 $('#home').addEventListener('input',async e=>{
   if(curMeeting&&e.target.id==='mDate'&&e.target.value){
@@ -1278,7 +1290,7 @@ function jobShowData(p,maps,pics,pm){
     pins.forEach(q=>q.n=++n);
     out.push({name:m.name||'',src:mo.src,w:mo.w,h:mo.h,pins});
   }
-  return out.length?{name:p.name,pm,date:p.date,size:p.size||1,maps:out}:null;
+  return out.length?{id:p.id,name:p.name,pm,date:p.date,size:p.size||1,maps:out}:null;
 }
 function buildShowData(){return jobShowData(P,mapObjs,photos,curPMName)}
 async function showDataFor(pid){
@@ -1535,6 +1547,7 @@ function startShow(Ds,opts={}){
   });
   ro.observe(sc.svg);
   if(!embedded&&!IS_IOS)toggleFull();
+  if(opts.from>0)c=Math.max(0,jobStart(opts.from));   // "Present from here": open at that job's overview
   render();
   return{go};
 }
@@ -1941,7 +1954,14 @@ async function exportShow(Ds,title,date){
     document.querySelectorAll('.toast').forEach(t=>t.remove());toast('Slideshow saved — open it on any device, no internet or app needed');
   }catch(e){console.error(e);document.querySelectorAll('.toast').forEach(t=>t.remove());toast('Export failed')}
 }
-$('#bPresent').addEventListener('click',()=>{const D=P&&mapObj&&buildShowData();if(D)startShow([D])});
+// the job's Present button plays the whole meeting, starting at this job
+$('#bPresent').addEventListener('click',async()=>{
+  if(!P||!mapObj||$('#show'))return;
+  flushSave();
+  const m=P.meetingId&&await DB.get('meetings',P.meetingId);
+  if(m)return presentIds(await idsForMeeting(m),m.date,P.id);
+  const D=buildShowData();if(D)startShow([D]);   // a job that is not in any meeting
+});
 $('#bExport').addEventListener('click',()=>{const D=P&&mapObj&&buildShowData();if(D)exportShow([D],P.name,P.date)});
 
 /* ================= boot ================= */

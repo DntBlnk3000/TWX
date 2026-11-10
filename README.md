@@ -7,8 +7,9 @@ A single-page web app for building photo-location slideshows for the weekly PM m
 - Do not commit photos or exported slideshow files to this repository.
 
 ## Run it
-Open the GitHub Pages address for this repo (Settings -> Pages shows it), for example
-`https://YOUR-USERNAME.github.io/YOUR-REPO/photo-map/`
+Open **https://dntblnk3000.github.io/TWX/**
+
+GitHub Pages publishes it from the `main` branch. A change shows up there a minute or two after it reaches `main`.
 
 On iPad/iPhone: open it in Safari, tap Share -> Add to Home Screen, and launch it from there for a full-screen app with no browser bars.
 
@@ -22,6 +23,11 @@ On iPad/iPhone: open it in Safari, tap Share -> Add to Home Screen, and launch i
 - With two or more maps, tabs above the map switch between them. Tap the selected tab to rename it, move it earlier or later in the slideshow, or remove it.
 - The slide order strip shows where the slideshow switches maps. The slideshow opens with one overview slide (the first map, with every photo of the job listed by map), then shows the photos map by map. It goes straight from the last photo on one map to the first photo on the next, with no overview slide in between. Photo numbers keep counting across maps. Extra maps with no photos placed are skipped.
 - **Earlier / Later** moves a photo only among the photos on its own map. To move a photo to another map, remove its marker and place it on that map.
+
+## Presenting
+- **Present meeting** (on a meeting page), or **Present** on a meeting card, plays every job in that meeting from the start.
+- **Present from here** on a job in the meeting list, or in an open job, plays the whole meeting starting at that job. You can still go back to earlier jobs.
+- Jobs with no site map are skipped.
 
 ## Zoom in while presenting
 - **Touchscreen:** pinch a photo or the site map to zoom in, drag with one finger to look around, and double-tap to see the whole picture again.
